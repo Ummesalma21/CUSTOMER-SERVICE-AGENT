@@ -3,8 +3,12 @@ __pycache__/
 *.py[cod]
 .venv/
 .python/
+.env
+.cache/
 
 # Local caches and large generated artifacts
+support-copilot/data/raw/
+support-copilot/data/cache/
 support-copilot/data/hf_cache/
 support-copilot/checkpoints/
 support-copilot/outputs/retriever/
@@ -20,6 +24,7 @@ support-copilot/outputs/preference/
 *.pt
 *.pth
 *.onnx
+*.pkl
 
 # Large generated prediction dumps and processed training data
 support-copilot/data/processed/*.jsonl
@@ -27,6 +32,7 @@ support-copilot/data/indexes/
 support-copilot/outputs/reports/*predictions*.jsonl
 support-copilot/outputs/reports/*scored.jsonl
 support-copilot/outputs/reports/tool_traces.jsonl
+support-copilot/outputs/reports/archive/*.jsonl
 
 # Logs
-support-copilot/outputs/logs/
+support-copilot/outputs/logs/*.log
