@@ -25,12 +25,17 @@ def create_ticket(summary: str, category: str, severity: str = "medium") -> dict
 
 
 def reject_query(reason: str, nearest_kb_distance: float, nearest_centroid_distance: float, confidence: float) -> dict:
+    message = "I can only help with questions covered by this support knowledge base. Your question appears outside the supported domains, so I cannot answer it here."
+    if reason == "underspecified_or_out_of_scope":
+        message = (
+            "I need a more specific support question to search the knowledge base. Please ask about benefits, "
+            "DMV services, VA benefits, or student aid policies."
+        )
     return {
         "decision": "rejected",
-        "message": "I can only help with questions covered by this support knowledge base. Your question appears outside the supported domains, so I cannot answer it here.",
+        "message": message,
         "reason": reason,
         "nearest_kb_distance": nearest_kb_distance,
         "nearest_centroid_distance": nearest_centroid_distance,
         "confidence": confidence,
     }
-

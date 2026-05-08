@@ -4,6 +4,8 @@ import re
 import time
 
 from src.generation.templates import cited_answer, reject_answer, ticket_answer
+from src.generation.answer_quality import is_support_like, is_vague_query, validate_answer
+from src.generation.grounded_generator import generate_grounded_answer
 from src.preference.score_candidates import choose_best
 from src.reranking.rerank import rerank
 from src.retrieval.search_kb import search
@@ -34,6 +36,15 @@ def run_proposed(query: str, config: dict) -> dict:
     lexical_low = (not lexical_gate.get("pass", False)) and int(lexical_gate.get("match_count", 0)) == 0
     global_probe = search(query, top_k=1)
     nearest_kb_similarity = float(global_probe[0]["score"]) if global_probe else 0.0
+    if is_vague_query(query, max_centroid=max_centroid, nearest_kb_similarity=nearest_kb_similarity):
+        ret = ex.call(
+            "RejectQuery",
+            reason="underspecified_or_out_of_scope",
+            nearest_kb_distance=1.0 - nearest_kb_similarity,
+            nearest_centroid_distance=1.0 - max_centroid,
+            confidence=1.0,
+        )
+        return _pack(query, "REJECT", ret["message"], [], [], ex.traces, triage, start, domains)
     ticket_like = _ticket_like_support_issue(query, lexical_gate, max_centroid, config)
     triage["label"] = _apply_triage_thresholds(query, triage, lexical_gate, max_centroid, nearest_kb_similarity, config)
     if triage["label"] == "REJECT":
@@ -75,9 +86,36 @@ def run_proposed(query: str, config: dict) -> dict:
         return _pack(query, "TICKET", ticket_answer(ticket, category), hits, [], ex.traces, triage, start, domains)
     if hits:
         ex.call("GetPolicy", doc_id=hits[0]["doc_id"], section_id=hits[0]["section_id"])
-    candidates = [cited_answer(query, hits), cited_answer(query, list(reversed(hits)) if len(hits) > 1 else hits)]
-    answer = choose_best(candidates, "ANSWER")
-    return _pack(query, "ANSWER", answer, hits, hits[:1], ex.traces, triage, start, domains)
+    answer_result = _grounded_answer(query, hits, config)
+    if answer_result["status"] != "ok":
+        if is_support_like(query) or (hits and float(hits[0].get("score", 0.0)) >= float(config.get("tau_chunk", 0.30))):
+            category = _ticket_category(query, top_domain)
+            ticket = ex.call("CreateTicket", summary=query, category=category, severity="medium")
+            return _pack(query, "TICKET", ticket_answer(ticket, category), hits, [], ex.traces, triage, start, domains)
+        ret = ex.call(
+            "RejectQuery",
+            reason="unsupported_domain",
+            nearest_kb_distance=1.0 - nearest_kb_similarity,
+            nearest_centroid_distance=1.0 - max_centroid,
+            confidence=0.7,
+        )
+        return _pack(query, "REJECT", ret["message"], [], [], ex.traces, triage, start, domains)
+    citations = hits[:1]
+    validation = validate_answer(answer_result["answer"] or "", query, citations, int(_nested(config, "answer_quality", "min_answer_words", 6)))
+    if not validation["valid"]:
+        if validation["support_like"] or (hits and float(hits[0].get("score", 0.0)) >= float(config.get("tau_chunk", 0.30))):
+            category = _ticket_category(query, top_domain)
+            ticket = ex.call("CreateTicket", summary=query, category=category, severity="medium")
+            return _pack(query, "TICKET", ticket_answer(ticket, category), hits, [], ex.traces, triage, start, domains)
+        ret = ex.call(
+            "RejectQuery",
+            reason="underspecified_or_out_of_scope",
+            nearest_kb_distance=1.0 - nearest_kb_similarity,
+            nearest_centroid_distance=1.0 - max_centroid,
+            confidence=0.8,
+        )
+        return _pack(query, "REJECT", ret["message"], [], [], ex.traces, triage, start, domains)
+    return _pack(query, "ANSWER", validation["answer"], hits, validation["citations"], ex.traces, triage, start, domains)
 
 
 def _ticket_like_support_issue(query: str, lexical_gate: dict, max_centroid: float, config: dict) -> bool:
@@ -154,6 +192,30 @@ def _apply_triage_thresholds(
     if should_reject:
         return "REJECT"
     return triage["label"]
+
+
+def _grounded_answer(query: str, hits: list[dict], config: dict) -> dict:
+    generation = config.get("generation", {}) if isinstance(config.get("generation"), dict) else {}
+    if bool(generation.get("enabled", False)):
+        return generate_grounded_answer(
+            query=query,
+            evidence_passages=hits[:3],
+            model_name=str(generation.get("model_name", "google/flan-t5-base")),
+            fallback_model_name=str(generation.get("fallback_model_name", "google/flan-t5-small")),
+            max_new_tokens=int(generation.get("max_new_tokens", 96)),
+            num_beams=int(generation.get("num_beams", 4)),
+            do_sample=bool(generation.get("do_sample", False)),
+            insufficient_token=str(generation.get("insufficient_token", "INSUFFICIENT_EVIDENCE")),
+        )
+    answer = choose_best([cited_answer(query, hits), cited_answer(query, list(reversed(hits)) if len(hits) > 1 else hits)], "ANSWER")
+    return {"status": "ok", "answer": answer, "used_evidence_ids": [hits[0].get("chunk_id", "")] if hits else [], "model_name": "template"}
+
+
+def _nested(config: dict, section: str, key: str, default):
+    value = config.get(section)
+    if isinstance(value, dict) and key in value:
+        return value[key]
+    return config.get(key, default)
 
 
 def _pack(query: str, decision: str, answer: str, hits: list[dict], citations: list[dict], traces: list[dict], triage: dict, start: float, domains: list[dict]) -> dict:

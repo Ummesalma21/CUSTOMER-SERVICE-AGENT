@@ -1,5 +1,5 @@
 {
-  "config": "configs\\final_eval_balanced_triage_best.yaml",
+  "config": "configs\\final_eval_generator.yaml",
   "eval_path": "data/processed/eval_set.jsonl",
   "count": 1500,
   "baseline": {

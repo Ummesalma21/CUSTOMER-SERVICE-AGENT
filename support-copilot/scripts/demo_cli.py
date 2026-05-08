@@ -15,10 +15,10 @@ def main() -> None:
     config = load_config(args.config)
     query = args.query or input("User query: ")
     result = presentation_result(run_proposed(query, config), query, config)
-    print(f"User query: {query}")
-    print(f"Decision: {result.get('decision')}")
-    if result.get("latency_ms") is not None:
-        print(f"Latency: {float(result['latency_ms']):.2f} ms")
+    print("User query:")
+    print(query)
+    print("\nDecision:")
+    print(result.get("decision"))
     print()
     print(format_tool_trace(result.get("tool_trace", [])))
     print("\nFinal answer:")
@@ -47,6 +47,9 @@ def main() -> None:
         if reject:
             print("\nReject reason:")
             print(reject.get("reason", "out_of_domain"))
+    if result.get("latency_ms") is not None:
+        print("\nLatency:")
+        print(f"{float(result['latency_ms']):.2f} ms")
 
 
 if __name__ == "__main__":

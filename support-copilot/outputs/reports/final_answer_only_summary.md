@@ -1,6 +1,6 @@
 # Final Answer-Only Evaluation
 
-Config: `configs\final_eval_balanced_triage_best.yaml`
+Config: `configs\final_eval_generator.yaml`
 Eval file: `data/processed/eval_set.jsonl`
 Answerable rows: `1500`
 

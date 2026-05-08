@@ -25,7 +25,7 @@ def retrieval_metrics(eval_rows: list[dict], predictions: list[dict], k: int = 5
 def grounding_metrics(predictions: list[dict]) -> dict:
     answer_like = [p for p in predictions if p.get("decision") == "ANSWER"]
     denom = max(1, len(answer_like))
-    cited = sum(1 for p in answer_like if "[doc_id=" in p.get("answer", ""))
+    cited = sum(1 for p in answer_like if "[doc_id=" in p.get("answer", "") or p.get("citations"))
     supported = sum(1 for p in answer_like if p.get("citations"))
     return {
         "CitationPrecision": cited / denom,
@@ -70,4 +70,3 @@ def write_csv(path: str | Path, rows: list[dict]) -> None:
         writer = csv.DictWriter(f, fieldnames=keys)
         writer.writeheader()
         writer.writerows(rows)
-

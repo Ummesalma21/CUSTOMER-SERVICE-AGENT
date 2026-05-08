@@ -7,25 +7,31 @@
     "ROUGE-L": null,
     "AnswerOutputCount": 1500,
     "NoFragmentRate": 0.6966666666666667,
+    "FragmentRate": 0.30333333333333334,
+    "CompleteAnswerRate": 0.6966666666666667,
     "FragmentCount": 455,
     "CitationAttachedRate": 1.0,
     "DuplicateCitationRate": 1.0,
     "DuplicateCitationCount": 1500,
     "AverageAnswerLengthWords": 19.78933333333333,
     "EmptyOrInvalidAnswerRate": 0.09066666666666667,
-    "EmptyOrInvalidAnswerCount": 136
+    "EmptyOrInvalidAnswerCount": 136,
+    "CitationRelevanceRate": 1.0
   },
   "proposed": {
     "AnswerTokenF1": null,
     "ROUGE-L": null,
-    "AnswerOutputCount": 1482,
-    "NoFragmentRate": 0.6916329284750338,
-    "FragmentCount": 457,
+    "AnswerOutputCount": 1289,
+    "NoFragmentRate": 1.0,
+    "FragmentRate": 0.0,
+    "CompleteAnswerRate": 1.0,
+    "FragmentCount": 0,
     "CitationAttachedRate": 1.0,
-    "DuplicateCitationRate": 0.9446693657219973,
-    "DuplicateCitationCount": 1400,
-    "AverageAnswerLengthWords": 16.968286099865047,
-    "EmptyOrInvalidAnswerRate": 0.0931174089068826,
-    "EmptyOrInvalidAnswerCount": 138
+    "DuplicateCitationRate": 0.0,
+    "DuplicateCitationCount": 0,
+    "AverageAnswerLengthWords": 33.069045771916215,
+    "EmptyOrInvalidAnswerRate": 0.0,
+    "EmptyOrInvalidAnswerCount": 0,
+    "CitationRelevanceRate": 1.0
   }
 }

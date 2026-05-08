@@ -12,7 +12,7 @@ from src.presentation import format_tool_trace, presentation_result, reject_from
 from src.utils.io import load_config
 
 
-DEFAULT_CONFIG = "configs/final_eval_balanced_triage_best.yaml"
+DEFAULT_CONFIG = "configs/final_eval_generator.yaml" if Path("configs/final_eval_generator.yaml").exists() else "configs/final_eval_balanced_triage_best.yaml"
 EXAMPLES = [
     "Can I renew my benefits online?",
     "Who won the IPL yesterday?",
@@ -22,9 +22,12 @@ EXAMPLES = [
 
 
 def main() -> None:
-    st.set_page_config(page_title="Reject-Aware Support Copilot", page_icon="?", layout="centered")
-    st.title("Reject-Aware Support Copilot")
-    st.caption("Supports questions about benefits, DMV services, VA benefits, and student aid policies.")
+    st.set_page_config(page_title="Customer Support Copilot", page_icon="?", layout="centered")
+    st.title("Customer Support Copilot")
+    st.caption(
+        "Answers supported KB questions with citations, creates tickets for account-specific issues, "
+        "and rejects unsupported out-of-domain questions."
+    )
     config_path = st.sidebar.text_input("Config", DEFAULT_CONFIG)
     if not Path(config_path).exists():
         st.error(f"Config not found: {config_path}")
@@ -34,12 +37,10 @@ def main() -> None:
     except Exception as exc:
         st.error(f"Could not load config: {exc}")
         return
-    st.write("Try an example:")
-    cols = st.columns(2)
-    for idx, example in enumerate(EXAMPLES):
-        if cols[idx % 2].button(example):
-            st.session_state["query"] = example
-    query = st.text_input("User query", value=st.session_state.get("query", EXAMPLES[0]))
+    with st.expander("Example queries"):
+        for example in EXAMPLES:
+            st.write(f"- {example}")
+    query = st.text_input("User query", value=st.session_state.get("query", ""))
     if not st.button("Run", type="primary"):
         return
     try:

@@ -3,28 +3,37 @@ from __future__ import annotations
 import argparse
 import re
 import string
+import subprocess
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from src.generation.answer_quality import (
+    CITATION_RE,
+    citation_identity,
+    clean_answer_text,
+    extract_inline_citation_dicts,
+    is_fragment_answer,
+)
 from src.generation.templates import cited_answer
-from src.presentation import CITATION_RE, clean_inline_citations, citation_identity, extract_inline_citations, is_fragment_answer
 from src.utils.io import project_path, read_jsonl, write_json, write_jsonl
 
 
-REFERENCE_FIELDS = ["gold_answer", "reference_answer", "answer", "target_answer", "expected_answer", "response"]
+REFERENCE_FIELDS = ["gold_answer", "reference_answer", "target_answer", "expected_answer", "answer", "gold_response", "reference_response"]
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--predictions", default="outputs/reports/final_answer_only_predictions.jsonl")
+    parser.add_argument("--config", default="configs/final_eval_generator.yaml")
     args = parser.parse_args()
     path = project_path(*Path(args.predictions).parts)
     if not path.exists():
-        raise SystemExit(
-            "Missing final_answer_only_predictions.jsonl. Run: "
-            ".\\.venv\\Scripts\\python.exe scripts\\evaluate_answer_only.py --config configs\\final_eval_balanced_triage_best.yaml"
+        subprocess.run(
+            [sys.executable, "scripts/evaluate_answer_only.py", "--config", args.config],
+            cwd=project_path(),
+            check=True,
         )
     rows = read_jsonl(path)
     scored = []
@@ -66,23 +75,25 @@ def _reference(row: dict) -> str | None:
 
 
 def _score_answer(answer: str, citations_or_hits: list[dict], reference: str | None, decision: str) -> dict:
-    cleaned = clean_inline_citations(answer)
+    cleaned = clean_answer_text(answer)
     words = _tokens(cleaned)
     token = _token_f1(cleaned, reference) if reference else None
     rouge = _rouge_l(cleaned, reference) if reference else None
     citation_identities = [citation_identity(c) for c in citations_or_hits or []]
-    inline_ids = [citation_identity(c) for c in extract_inline_citations(answer)]
+    inline_ids = [citation_identity(c) for c in extract_inline_citation_dicts(answer)]
     attached = bool(citation_identities or inline_ids or CITATION_RE.search(answer or ""))
     duplicate = bool(len(set(citation_identities + inline_ids)) < len(citation_identities + inline_ids) and (citation_identities or inline_ids))
     return {
         "AnswerTokenF1": token,
         "ROUGE-L": rouge,
         "NoFragment": not is_fragment_answer(answer),
+        "CompleteAnswer": not is_fragment_answer(answer),
         "CitationAttached": attached,
         "DuplicateCitation": duplicate,
         "AverageAnswerLengthWords": len(words),
         "EmptyOrInvalidAnswer": len(words) < 3,
         "IsAnswerOutput": decision == "ANSWER",
+        "CitationRelevant": _citation_relevant(citations_or_hits),
     }
 
 
@@ -94,11 +105,14 @@ def _aggregate(scores: list[dict]) -> dict:
     fragments = sum(1 for s in answer_scores if not s["NoFragment"])
     duplicates = sum(1 for s in answer_scores if s["DuplicateCitation"])
     invalid = sum(1 for s in answer_scores if s["EmptyOrInvalidAnswer"])
+    citation_relevant = [s for s in answer_scores if s["CitationRelevant"] is not None]
     return {
         "AnswerTokenF1": sum(token_values) / len(token_values) if token_values else None,
         "ROUGE-L": sum(rouge_values) / len(rouge_values) if rouge_values else None,
         "AnswerOutputCount": len(answer_scores),
         "NoFragmentRate": sum(1 for s in answer_scores if s["NoFragment"]) / n,
+        "FragmentRate": fragments / n,
+        "CompleteAnswerRate": sum(1 for s in answer_scores if s["CompleteAnswer"]) / n,
         "FragmentCount": fragments,
         "CitationAttachedRate": sum(1 for s in answer_scores if s["CitationAttached"]) / n,
         "DuplicateCitationRate": duplicates / n,
@@ -106,6 +120,7 @@ def _aggregate(scores: list[dict]) -> dict:
         "AverageAnswerLengthWords": sum(s["AverageAnswerLengthWords"] for s in answer_scores) / n,
         "EmptyOrInvalidAnswerRate": invalid / n,
         "EmptyOrInvalidAnswerCount": invalid,
+        "CitationRelevanceRate": sum(1 for s in citation_relevant if s["CitationRelevant"]) / max(1, len(citation_relevant)),
     }
 
 
@@ -149,7 +164,7 @@ def _lcs_len(a: list[str], b: list[str]) -> int:
 
 
 def _tokens(text: str) -> list[str]:
-    text = clean_inline_citations(text).lower()
+    text = clean_answer_text(text).lower()
     text = re.sub(rf"[{re.escape(string.punctuation)}]", " ", text)
     return re.findall(r"\b\w+\b", text)
 
@@ -171,9 +186,12 @@ def _write_summary(metrics: dict) -> None:
         "AnswerTokenF1",
         "ROUGE-L",
         "NoFragmentRate",
+        "FragmentRate",
         "CitationAttachedRate",
         "DuplicateCitationRate",
         "EmptyOrInvalidAnswerRate",
+        "CompleteAnswerRate",
+        "CitationRelevanceRate",
         "AverageAnswerLengthWords",
     ]:
         b = metrics["baseline"].get(key)
@@ -190,6 +208,13 @@ def _fmt(value) -> str:
     if isinstance(value, float):
         return f"{value:.4f}"
     return str(value)
+
+
+def _citation_relevant(citations_or_hits: list[dict]) -> bool | None:
+    if not citations_or_hits:
+        return None
+    top = citations_or_hits[0]
+    return bool(top.get("doc_id") and top.get("chunk_id") and top.get("text"))
 
 
 if __name__ == "__main__":

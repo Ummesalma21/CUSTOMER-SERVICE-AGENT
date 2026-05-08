@@ -121,6 +121,16 @@ Config: `configs/final_eval_balanced_triage_best.yaml`
 
 The proposed system preserves near-baseline answer retrieval: Recall@5 is 0.4513 versus baseline 0.4520.
 
+## Grounded Generator
+
+Config: `configs/final_eval_generator.yaml`
+
+The final demo/inference path now uses a grounded ANSWER synthesizer. Tool decisions are still made by the existing routing plus balanced triage/tool-policy model; the generator does not decide ANSWER, TICKET, or REJECT.
+
+For ANSWER decisions, the generator receives the user question and retrieved evidence passages and is instructed to answer only from that evidence or return `INSUFFICIENT_EVIDENCE`. Citations are attached by the system from retrieved evidence; the generator is not allowed to emit document IDs or citation strings.
+
+The preferred model is `google/flan-t5-base`, with `google/flan-t5-small` as fallback. In this environment the FLAN-T5 models were not available from local cache and network download was not used, so inference fell back to the deterministic extractive synthesizer. The fallback selects complete evidence sentences and rejects fragmentary substrings.
+
 ## Answer Quality Evaluation
 
 Answer-quality metrics are computed only on answerable examples. Citation markers are stripped before token overlap and ROUGE-L scoring. The saved answer-only prediction file does not contain separate human reference answer text, so AnswerTokenF1 and ROUGE-L are not computed rather than inferred from evidence.
@@ -129,20 +139,27 @@ Answer-quality metrics are computed only on answerable examples. Citation marker
 |---|---:|---:|
 | AnswerTokenF1 | N/A | N/A |
 | ROUGE-L | N/A | N/A |
-| NoFragmentRate | 0.6967 | 0.6916 |
+| NoFragmentRate | 0.6967 | 1.0000 |
+| FragmentRate | 0.3033 | 0.0000 |
 | CitationAttachedRate | 1.0000 | 1.0000 |
-| DuplicateCitationRate | 1.0000 | 0.9447 |
-| EmptyOrInvalidAnswerRate | 0.0907 | 0.0931 |
-| AverageAnswerLengthWords | 19.7893 | 16.9683 |
+| DuplicateCitationRate | 1.0000 | 0.0000 |
+| EmptyOrInvalidAnswerRate | 0.0907 | 0.0000 |
+| CompleteAnswerRate | 0.6967 | 1.0000 |
+| CitationRelevanceRate | 1.0000 | 1.0000 |
+| AverageAnswerLengthWords | 19.7893 | 33.0690 |
 
-The raw answer templates still produce some fragment-like outputs, so answer quality is not claimed to improve on fragment rate. Demo presentation now applies guardrails to avoid displaying fragment answers as confident responses and formats citations once in a separate block.
+Reference answer text is not available in the saved answer-only prediction file, so lexical overlap metrics are not claimed. The no-reference answer quality metrics improve after grounded synthesis and answer validation: fragment outputs and duplicate citation formatting are eliminated for final proposed ANSWER outputs.
+
+## Tool Schema
+
+Tool calls are structured and validated against `schemas/tool_schema.json`. The schema defines JSON-style argument and return schemas for `RouteDomain`, `SearchKB`, `GetPolicy`, `CreateTicket`, and `RejectQuery`. `src/tools/schema_loader.py` loads the schema and validates required arguments before tool execution.
 
 ## Demo Interface
 
 CLI:
 
 ```powershell
-.\.venv\Scripts\python.exe scripts\demo_cli.py --query "Can I renew my benefits online?" --config configs\final_eval_balanced_triage_best.yaml
+.\.venv\Scripts\python.exe scripts\demo_cli.py --query "Can I renew my benefits online?" --config configs\final_eval_generator.yaml
 ```
 
 Streamlit:
@@ -163,6 +180,10 @@ Example queries:
 - `Who won the IPL yesterday?`
 - `My benefits renewal is stuck as pending for case ACCT-555123; can someone check my account?`
 - `Why am I here?`
+
+## Honest Reporting Notes
+
+The proposed system preserves near-baseline answer retrieval rather than greatly improving retrieval. Workflow and evidence-use metrics improve over the answer-only baseline. TICKET and REJECT examples are partly synthetic because MultiDoc2Dial mainly contains answerable dialogue turns. Reranker is disabled in the final calibrated/generator config for speed; retrieval score ordering is used. The generator improves customer-facing formulation but remains constrained by retrieved evidence, and when local FLAN-T5 weights are unavailable the system uses deterministic extractive synthesis.
 
 ## Latency
 

@@ -1,0 +1,129 @@
+{
+  "tools": [
+    {
+      "name": "RouteDomain",
+      "description": "Predict likely support knowledge-base domains for a user query.",
+      "arguments_schema": {
+        "type": "object",
+        "properties": {
+          "query": {"type": "string"},
+          "top_k_domains": {"type": "integer", "minimum": 1}
+        },
+        "required": ["query", "top_k_domains"]
+      },
+      "returns_schema": {
+        "type": "object",
+        "properties": {
+          "domains": {"type": "array"},
+          "route_confidence": {"type": "number"},
+          "lexical_gate": {"type": "object"}
+        },
+        "required": ["domains"]
+      }
+    },
+    {
+      "name": "SearchKB",
+      "description": "Retrieve relevant passages from the support knowledge base.",
+      "arguments_schema": {
+        "type": "object",
+        "properties": {
+          "query": {"type": "string"},
+          "top_k": {"type": "integer", "minimum": 1},
+          "domain": {"type": ["string", "null"]}
+        },
+        "required": ["query", "top_k", "domain"]
+      },
+      "returns_schema": {
+        "type": "object",
+        "properties": {
+          "passages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "doc_id": {"type": "string"},
+                "chunk_id": {"type": "string"},
+                "section_id": {"type": "string"},
+                "span_start": {"type": "integer"},
+                "span_end": {"type": "integer"},
+                "text": {"type": "string"},
+                "score": {"type": "number"},
+                "domain": {"type": "string"}
+              },
+              "required": ["doc_id", "chunk_id", "text", "score", "domain"]
+            }
+          }
+        },
+        "required": ["passages"]
+      }
+    },
+    {
+      "name": "GetPolicy",
+      "description": "Fetch policy text for a known document and section.",
+      "arguments_schema": {
+        "type": "object",
+        "properties": {
+          "doc_id": {"type": "string"},
+          "section_id": {"type": "string"}
+        },
+        "required": ["doc_id", "section_id"]
+      },
+      "returns_schema": {
+        "type": "object",
+        "properties": {
+          "policy_text": {"type": "string"},
+          "doc_id": {"type": "string"},
+          "section_id": {"type": "string"}
+        },
+        "required": ["policy_text", "doc_id", "section_id"]
+      }
+    },
+    {
+      "name": "CreateTicket",
+      "description": "Create a support ticket for account-specific or manual-review cases.",
+      "arguments_schema": {
+        "type": "object",
+        "properties": {
+          "summary": {"type": "string"},
+          "category": {"type": "string"},
+          "severity": {"type": "string", "enum": ["low", "medium", "high"]}
+        },
+        "required": ["summary", "category", "severity"]
+      },
+      "returns_schema": {
+        "type": "object",
+        "properties": {
+          "ticket_id": {"type": "string"},
+          "status": {"type": "string"}
+        },
+        "required": ["ticket_id", "status"]
+      }
+    },
+    {
+      "name": "RejectQuery",
+      "description": "Reject or clarify unsupported, underspecified, unsafe, or out-of-domain queries.",
+      "arguments_schema": {
+        "type": "object",
+        "properties": {
+          "reason": {"type": "string", "enum": ["out_of_domain", "underspecified_or_out_of_scope", "unsupported_domain", "unsafe"]},
+          "nearest_kb_distance": {"type": ["number", "null"]},
+          "nearest_centroid_distance": {"type": ["number", "null"]},
+          "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+        },
+        "required": ["reason", "nearest_kb_distance", "nearest_centroid_distance", "confidence"]
+      },
+      "returns_schema": {
+        "type": "object",
+        "properties": {
+          "decision": {"type": "string"},
+          "message": {"type": "string"},
+          "reason": {"type": "string"},
+          "nearest_kb_distance": {"type": ["number", "null"]},
+          "nearest_centroid_distance": {"type": ["number", "null"]},
+          "confidence": {"type": "number"}
+        },
+        "required": ["decision", "message", "reason"]
+      }
+    }
+  ]
+}
