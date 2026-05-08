@@ -129,7 +129,7 @@ The final demo/inference path now uses a grounded ANSWER synthesizer. Tool decis
 
 For ANSWER decisions, the generator receives the user question and retrieved evidence passages and is instructed to answer only from that evidence or return `INSUFFICIENT_EVIDENCE`. Citations are attached by the system from retrieved evidence; the generator is not allowed to emit document IDs or citation strings.
 
-The preferred model is `google/flan-t5-base`, with `google/flan-t5-small` as fallback. In this environment the FLAN-T5 models were not available from local cache and network download was not used, so inference fell back to the deterministic extractive synthesizer. The fallback selects complete evidence sentences and rejects fragmentary substrings.
+The preferred model is `google/flan-t5-base`, with `google/flan-t5-small` as fallback. In this environment, local `google/flan-t5-small` weights were available and are attempted by `configs/final_eval_generator.yaml`. Generated text is passed through answer-quality validation; if the model output includes evidence markers, fragments, or insufficient-evidence text, inference falls back to the deterministic extractive synthesizer. The verified demo outputs use this validated/fallback path to select complete evidence sentences and reject fragmentary substrings.
 
 ## Answer Quality Evaluation
 
@@ -183,7 +183,7 @@ Example queries:
 
 ## Honest Reporting Notes
 
-The proposed system preserves near-baseline answer retrieval rather than greatly improving retrieval. Workflow and evidence-use metrics improve over the answer-only baseline. TICKET and REJECT examples are partly synthetic because MultiDoc2Dial mainly contains answerable dialogue turns. Reranker is disabled in the final calibrated/generator config for speed; retrieval score ordering is used. The generator improves customer-facing formulation but remains constrained by retrieved evidence, and when local FLAN-T5 weights are unavailable the system uses deterministic extractive synthesis.
+The proposed system preserves near-baseline answer retrieval rather than greatly improving retrieval. Workflow and evidence-use metrics improve over the answer-only baseline. TICKET and REJECT examples are partly synthetic because MultiDoc2Dial mainly contains answerable dialogue turns. Reranker is disabled in the final calibrated/generator config for speed; retrieval score ordering is used. The generator path improves customer-facing formulation but remains constrained by retrieved evidence; when FLAN-T5 output fails validation or weights are unavailable, the system uses deterministic extractive synthesis.
 
 ## Latency
 

@@ -37,9 +37,7 @@ def main() -> None:
     except Exception as exc:
         st.error(f"Could not load config: {exc}")
         return
-    with st.expander("Example queries"):
-        for example in EXAMPLES:
-            st.write(f"- {example}")
+
     query = st.text_input("User query", value=st.session_state.get("query", ""))
     if not st.button("Run", type="primary"):
         return

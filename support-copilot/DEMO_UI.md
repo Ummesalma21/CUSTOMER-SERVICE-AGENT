@@ -26,3 +26,5 @@ Example queries:
 - `Who won the IPL yesterday?`
 - `My benefits renewal is stuck as pending for case ACCT-555123; can someone check my account?`
 - `Why am I here?`
+
+Use curated examples for presentation; arbitrary unsupported queries may be rejected or escalated depending on evidence sufficiency.

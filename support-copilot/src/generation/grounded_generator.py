@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from src.generation.answer_quality import clean_answer_text
+from src.generation.answer_quality import clean_answer_text, is_fragment_answer
 from src.generation.extractive_synthesizer import synthesize_extractive_answer
 
 
@@ -40,7 +40,7 @@ def generate_grounded_answer(
             answer = clean_answer_text(tokenizer.decode(out[0], skip_special_tokens=True))
             if answer.strip() == insufficient_token:
                 return synthesize_extractive_answer(query, evidence_passages)
-            if not answer:
+            if not answer or is_fragment_answer(answer):
                 return synthesize_extractive_answer(query, evidence_passages)
             return {
                 "status": "ok",

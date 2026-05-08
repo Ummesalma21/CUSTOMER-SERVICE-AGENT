@@ -1,160 +1,62 @@
 # Reject-Aware Domain-Routed Customer Support Copilot
 
-This project implements a reject-aware domain-routed customer-support copilot using MultiDoc2Dial. The system uses centroid-based domain routing, FAISS-compatible retrieval artifacts, cross-encoder-style reranking, a boundary-aware triage model for `ANSWER` / `TICKET` / `REJECT`, structured tool execution, and preference/rubric-based answer selection. It compares against a baseline retrieval-only RAG system and reports retrieval, grounding, triage, routing, and latency metrics.
+This project implements a support RAG system over MultiDoc2Dial-style knowledge bases. It routes questions to likely support domains, searches cited KB passages, and uses structured tools to choose one of three support actions:
 
-The smoke path is intentionally lightweight: it uses deterministic hashing embeddings and a compact offline fixture. The `full_local` path downloads IBM/MultiDoc2Dial and trains real local models with small default limits so it can run on CPU-only machines, accepting that quality is not representative of a full training run.
+- `ANSWER`: return a grounded answer with citations.
+- `TICKET`: create/escalate an account-specific or manual-review support issue.
+- `REJECT`: conservatively reject clearly unsupported or out-of-domain queries.
+
+The final system is designed to preserve answerable customer-question retrieval while adding workflow control and high-precision rejection.
+
+## Problem Statement Mapping
+
+- Retrieve KB passages with citations: yes.
+- Tool calling: `RouteDomain`, `SearchKB`, `GetPolicy`, `CreateTicket`, `RejectQuery`.
+- Escalation/ticket creation: yes.
+- Baseline comparison: yes, against retrieval-only baseline RAG.
+- Trained components: retriever, reranker, triage/tool-policy model, lightweight preference/rubric ranker.
+- Demo: CLI and Streamlit UI.
+- Latency: reported on the final mixed workflow evaluation.
+- Structured tool schema: `schemas/tool_schema.json`.
 
 ## Setup
 
-```bash
+```powershell
 python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
-# or .venv\Scripts\activate on Windows
+.\.venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## Smoke Run
+If Streamlit is not installed and you want the UI:
 
-```bash
-python run_all.py --config configs/smoke.yaml
+```powershell
+.\.venv\Scripts\python.exe -m pip install streamlit
 ```
 
-This produces:
+## Data
 
-```text
-outputs/reports/baseline_metrics.json
-outputs/reports/proposed_metrics.json
-outputs/reports/ablation_metrics.csv
-outputs/reports/latency_metrics.json
-outputs/reports/tool_traces.jsonl
-outputs/reports/example_predictions.jsonl
-outputs/reports/final_summary.md
-```
+The project uses IBM/MultiDoc2Dial-derived support documents, dialogue turns, and evidence references. Processed data is written under `data/processed/`.
 
-## Full Local Run
+The final workflow evaluation is mixed:
 
-```bash
-python run_all.py --config configs/full_local.yaml
-```
+- ANSWER examples come from real MultiDoc2Dial answerable turns.
+- TICKET examples are synthetic in-domain account-specific/manual-review support cases.
+- REJECT examples are synthetic out-of-domain, support-like out-of-domain, and near-boundary queries.
 
-`full_local.yaml` is configured for small batches, one epoch per learned component, and no generator fine-tuning by default. It uses:
+This is intentional because MultiDoc2Dial mainly contains answerable dialogue turns and does not provide enough native ticket/reject workflow examples.
 
-- Retriever: `sentence-transformers/all-MiniLM-L6-v2` fine-tuned with `MultipleNegativesRankingLoss`, then indexed as normalized embeddings plus `data/indexes/kb_index.faiss`.
-- Reranker: `cross-encoder/ms-marco-MiniLM-L-6-v2` fine-tuned on positive/negative query-passage pairs.
-- Triage: `distilbert-base-uncased` sequence classifier trained with cross entropy plus `lambda_boundary * softplus(max_wrong_logit - correct_logit + mu)`.
-- Preference: lightweight rubric ranker, intentionally not a neural model.
+## Run Demo
 
-## Final GPU Experiment
-
-Final config: `configs/full.yaml`.
-
-The final run used GPU training after replacing CPU-only PyTorch with CUDA PyTorch:
-
-- GPU: NVIDIA GeForce RTX 3050 6GB Laptop GPU.
-- PyTorch: `2.11.0+cu128`.
-- CUDA build: `12.8`.
-- `torch.cuda.is_available()`: `True`.
-
-The requested training limits were preserved. Evaluation was reduced from 3000 to 300 queries because the 3000-query evaluation exceeded the 1-hour command timeout; this reduction is recorded in `configs/full.yaml` and `outputs/reports/final_summary.md`.
-
-Final dataset/training sizes:
-
-- KB chunks: 5289.
-- Dialogue turns: 57222.
-- Retriever pairs: 9000.
-- Reranker pairs: 36000.
-- Triage examples: 18000.
-- Preference pairs: 3000.
-- Eval rows used in report: 300.
-
-Final checkpoints:
-
-- `outputs/retriever/sentence_transformer`
-- `outputs/reranker/cross_encoder`
-- `outputs/triage/distilbert`
-- `outputs/preference`
-
-Final metrics:
-
-- Baseline: `Recall@5=0.4333`, `MRR@10=0.3134`, `EvidenceHit@5=0.4333`.
-- Proposed: `Recall@5=0.1600`, `MRR@10=0.1259`, `Tool Decision Accuracy=0.4433`, `Macro-F1=0.2048`, `REE@5=0.6511`.
-- Latency: average `1865.57ms`, p95 `4977.52ms`, `0.536 qps`.
-
-The proposed system is worse than baseline on retrieval in this run. It does produce grounded cited answers when it answers (`CitationPrecision=1.0`, `CitationRecall=1.0`, `UnsupportedClaimRate=0.0`), but routing/triage calibration needs more work.
-
-Regression/demo checks:
-
-```bash
-python scripts/regression_checks.py --config configs/full.yaml
-python scripts/demo_cli.py --query "Can I renew my benefits online?" --config configs/full.yaml
-python scripts/demo_cli.py --query "Who won the IPL yesterday?" --config configs/full.yaml
-```
-
-The benefits query now cites `ssa_renewal_03`; the IPL query calls `RejectQuery`.
-
-## Calibrated No-Retrain Evaluation
-
-Calibrated eval config: `configs/final_eval_calibrated.yaml`.
-
-This run reused the saved full-training checkpoints and did not retrain. It changed only inference/evaluation behavior:
-
-- Domain routing searches top-3 domains.
-- Routed search falls back to global search when the routed best score is below `0.75`.
-- REJECT is conservative: lexical gate low, centroid similarity low, and nearest-KB similarity below `0.40` must all hold.
-- Uncertain support-like model rejects are softened to TICKET.
-- Neural reranking is bypassed for this calibrated eval (`use_reranker: false`) because the 1000-query pass was otherwise dominated by cross-encoder/query-inference latency; retriever score ordering is used.
-- The JSON index and query embeddings are cached in memory during evaluation.
-
-Calibrated metrics on 1000 eval rows:
-
-- Baseline: `Recall@5=0.437`, `MRR@10=0.3231`, `EvidenceHit@5=0.437`.
-- Proposed: `Recall@5=0.423`, `MRR@10=0.3113`, `EvidenceHit@5=0.423`, `Tool Decision Accuracy=0.877`, `ANSWER F1=0.9345`, `TICKET F1=0.0`, `REJECT F1=0.0`, `False Reject Rate=0.122`, `False Accept Rate=0.0`, `REE@5=0.5656`.
-- Latency: average `36.72ms`, p95 `47.09ms`, `27.23 qps`.
-
-The calibrated retrieval metrics are much closer to baseline than the previous final run (`Recall@5=0.423` vs baseline `0.437`), but still slightly worse. Aggregate TICKET/REJECT F1 remain `0.0`; the operational regression checks still pass: benefits renewal cites `ssa_renewal_03`, and IPL calls `RejectQuery`.
-
-## Step-by-Step
-
-```bash
-python scripts/prepare_data.py --config configs/full_local.yaml
-python scripts/train_retriever.py --config configs/full_local.yaml
-python scripts/build_index.py --config configs/full_local.yaml
-python scripts/train_reranker.py --config configs/full_local.yaml
-python scripts/train_triage.py --config configs/full_local.yaml
-python scripts/train_preference.py --config configs/full_local.yaml
-python scripts/evaluate.py --config configs/full_local.yaml
-python scripts/demo_cli.py --config configs/full_local.yaml
-```
-
-## Acceptance Smoke Commands
-
-```bash
-python run_all.py --config configs/smoke.yaml
-python scripts/evaluate.py --config configs/smoke.yaml
-python scripts/demo_cli.py --query "Can I renew my benefits online?" --config configs/smoke.yaml
-python scripts/demo_cli.py --query "Who won the IPL yesterday?" --config configs/smoke.yaml
-```
-
-## Tools
-
-The end-to-end system emits JSON traces for:
-
-- `RouteDomain`
-- `SearchKB`
-- `GetPolicy`
-- `CreateTicket`
-- `RejectQuery`
-
-Answers from KB evidence include `doc_id`, `chunk_id`, and span references. Out-of-domain questions call `RejectQuery`; related but under-supported questions call `CreateTicket`.
-
-Tool calls are structured and validated against `schemas/tool_schema.json`, which defines JSON-style argument and return schemas for `RouteDomain`, `SearchKB`, `GetPolicy`, `CreateTicket`, and `RejectQuery`.
-
-## Final Demo
-
-CLI:
+CLI demo:
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\demo_cli.py --query "Can I renew my benefits online?" --config configs\final_eval_generator.yaml
+```
+
+Main final evaluation/demo config without generator fallback emphasis:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\demo_cli.py --query "Can I renew my benefits online?" --config configs\final_eval_balanced_triage_best.yaml
 ```
 
 Streamlit UI:
@@ -163,49 +65,126 @@ Streamlit UI:
 .\.venv\Scripts\python.exe -m streamlit run app_streamlit.py
 ```
 
-If Streamlit is not installed:
+See `DEMO_UI.md` for UI notes and presentation examples.
+
+## Training Commands
+
+Full pipeline training:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pip install streamlit
+.\.venv\Scripts\python.exe scripts\prepare_data.py --config configs\full.yaml
+.\.venv\Scripts\python.exe scripts\train_retriever.py --config configs\full.yaml
+.\.venv\Scripts\python.exe scripts\build_index.py --config configs\full.yaml
+.\.venv\Scripts\python.exe scripts\train_reranker.py --config configs\full.yaml
+.\.venv\Scripts\python.exe scripts\train_triage.py --config configs\full.yaml
+.\.venv\Scripts\python.exe scripts\train_preference.py --config configs\full.yaml
 ```
 
-`configs/final_eval_generator.yaml` keeps the trained retriever/reranker/triage checkpoints fixed. ANSWER text is synthesized from retrieved evidence with a small local-cache seq2seq generator when available, otherwise a complete-sentence extractive fallback is used. Citations are attached by the system, not generated by the model.
+Balanced triage retraining used for the final workflow model:
 
-## Model Components
+```powershell
+.\.venv\Scripts\python.exe scripts\build_balanced_triage_data.py
+.\.venv\Scripts\python.exe scripts\train_triage.py --config configs\triage_balanced.yaml
+```
 
-- Retriever: smoke-friendly hashing encoder for `smoke`; fine-tuned SentenceTransformer for `full_local`, saved under `outputs/retriever/sentence_transformer/`.
-- Reranker: lexical scorer for `smoke`; fine-tuned CrossEncoder for `full_local`, saved under `outputs/reranker/cross_encoder/`.
-- Triage/tool policy: boundary-aware lexical scorer for `smoke`; fine-tuned DistilBERT classifier for `full_local`, saved under `outputs/triage/distilbert/`.
-- Preference alignment: rubric ranker saved under `outputs/preference/`.
-- Generator: template-guided cited answer generation; FLAN-T5 LoRA hook is present but optional.
+The final cleanup did not retrain retriever, reranker, or triage checkpoints.
 
-## Latest Small Full-Local Results
+## Evaluation Commands
 
-Run date: 2026-05-07 on CPU-only Torch (`torch.cuda.is_available() == False`).
+Mixed workflow evaluation:
 
-Config limits: 300 balanced KB chunks, 64 train rows, 24 eval rows, one epoch for retriever/reranker/triage.
+```powershell
+.\.venv\Scripts\python.exe scripts\evaluate_mixed.py --config configs\final_eval_balanced_triage_best.yaml
+```
 
-Stage results:
+Mixed grounding/evidence-use evaluation:
 
-- Data: IBM/MultiDoc2Dial loaded; 904 dialogue turns, 63 retriever positives, 126 reranker pairs, 64 triage examples, 24 preference/eval rows.
-- Retriever: trained 63 pairs, `train_loss=1.33`, `train_runtime=7.468s`.
-- Reranker: trained 126 pairs, `train_loss=2.048`, `train_runtime=17.25s`.
-- Triage: trained 64 examples, train accuracy `0.984375`, `TBP@0.15=0.984375`, last train loss `0.3565655`.
-- Preference: trained 24 pairs, pair accuracy `1.0`.
-- End-to-end proposed metrics on 24 eval rows: `Recall@5=0.1667`, `MRR@10=0.1458`, `Tool Decision Accuracy=0.375`, `Macro-F1=0.1818`, `False Reject Rate=0.3333`, `REE@5=0.6667`, average latency `227.09ms`.
+```powershell
+.\.venv\Scripts\python.exe scripts\evaluate_grounding_mixed.py --config configs\final_eval_balanced_triage_best.yaml
+```
 
-These are smoke-sized CPU sanity results, not a claim of production quality. The baseline retrieval-only run scored `Recall@5=0.2083`, so the tiny full pipeline currently validates execution more than model quality.
+Answer-only retrieval/grounding evaluation:
 
-Disk footprint after cleanup:
+```powershell
+.\.venv\Scripts\python.exe scripts\evaluate_answer_only.py --config configs\final_eval_generator.yaml
+```
 
-- `.venv`: about 1.2 GB.
-- local Python `.python`: about 127 MB.
-- project Hugging Face data cache: about 140 MB.
-- saved checkpoints: retriever about 87 MB, reranker about 87 MB, triage about 256 MB.
-- index artifacts: about 4 MB.
+Answer-quality and formatting evaluation:
 
-The initial Windows install logs and installer were removed. Duplicate user-level Hugging Face cache entries for the three downloaded models and IBM/MultiDoc2Dial were also removed after checkpoints were saved; unrelated user cache entries were left untouched.
+```powershell
+.\.venv\Scripts\python.exe scripts\evaluate_answer_quality.py --config configs\final_eval_generator.yaml
+```
 
-## Notes
+## Final Results
 
-Every script accepts `--config`, writes predictable JSON/JSONL/CSV outputs, and falls back to CPU-compatible logic. The smoke mode does not require network access. `full_local` requires network on first run and uses `datasets>=2.18,<4` because IBM/MultiDoc2Dial is script-backed and newer `datasets` 4.x rejects dataset scripts.
+### Table A: Mixed Workflow
+
+| Metric | Baseline RAG | Proposed Balanced Triage |
+|---|---:|---:|
+| Macro-F1 | 0.250 | 0.674 |
+| Tool Decision Accuracy | 0.600 | 0.765 |
+| ANSWER F1 | 0.750 | 0.835 |
+| TICKET F1 | 0.000 | 0.614 |
+| REJECT F1 | 0.000 | 0.574 |
+| Reject Precision | 0.000 | 0.933 |
+| FalseRejectRate | 0.000 | 0.0075 |
+
+### Table B: Evidence-Use Grounding
+
+| Metric | Baseline RAG | Proposed Balanced Triage |
+|---|---:|---:|
+| SupportedResponseRate | 0.551 | 0.718 |
+| UnsupportedAnswerRate | 0.449 | 0.282 |
+| EvidenceUseAccuracy | 0.600 | 0.765 |
+
+### Table C: Answer-Only Retrieval/Grounding
+
+| Metric | Baseline RAG | Proposed Balanced Triage |
+|---|---:|---:|
+| Recall@5 | 0.4520 | 0.4513 |
+| EvidenceHit@5 | 0.4520 | 0.4513 |
+| CitationPrecision | 1.000 | 1.000 |
+
+The proposed system preserves near-baseline answer retrieval; it does not significantly improve retrieval over the baseline.
+
+### Table D: Answer Quality / Formatting
+
+Reference answer text was not available in the answer-only prediction file, so token F1 and ROUGE-L are not reported. The following no-reference formatting and citation metrics are computed over answerable outputs.
+
+| Metric | Baseline RAG | Proposed Balanced Triage |
+|---|---:|---:|
+| NoFragmentRate | 0.697 | 1.000 |
+| FragmentRate | 0.303 | 0.000 |
+| DuplicateCitationRate | 1.000 | 0.000 |
+| EmptyOrInvalidAnswerRate | 0.091 | 0.000 |
+| CompleteAnswerRate | 0.697 | 1.000 |
+| CitationAttachedRate | 1.000 | 1.000 |
+
+### Latency
+
+Final mixed workflow latency:
+
+| Metric | Value |
+|---|---:|
+| Average latency | 99.28 ms |
+| p95 latency | 145.20 ms |
+| Throughput | 10.07 qps |
+
+## Grounded Generator
+
+`configs/final_eval_generator.yaml` enables a small grounded generator path for `ANSWER` synthesis. Tool decisions are still made by routing and triage/tool-policy logic. The generator receives the user question and retrieved evidence and is instructed to answer only from evidence or return `INSUFFICIENT_EVIDENCE`.
+
+Citations are attached by the system from retrieved passages, not generated by the model. If FLAN-T5 is unavailable, returns insufficient evidence, or produces a fragment/citation-like output, inference falls back to the extractive synthesizer in `src/generation/extractive_synthesizer.py`.
+
+## Important Limitations
+
+- TICKET and REJECT examples are partly synthetic because MultiDoc2Dial mainly contains answerable turns.
+- The final system preserves retrieval rather than significantly improving retrieval.
+- Reject behavior is intentionally conservative to avoid rejecting answerable customer questions.
+- Answer quality remains a limitation compared with a fully trained grounded LLM generator.
+- No DPO or generator fine-tuning is claimed.
+- FLAN-T5 should only be described as used when the model is actually available in the local environment; validated inference can still fall back to extractive synthesis when generation quality is insufficient.
+
+## Earlier Calibration Runs / Ablations
+
+Earlier debug and calibration runs produced weaker proposed retrieval and routing numbers. Those files are kept under `outputs/reports/archive/` for auditability, but they are not the final submitted results. The final narrative should use `outputs/reports/FINAL_RESULTS_FOR_REPORT.md` and the final metrics files listed in `outputs/reports/REPORT_INDEX.md`.

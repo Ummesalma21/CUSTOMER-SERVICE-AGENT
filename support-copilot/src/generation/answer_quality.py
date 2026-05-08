@@ -77,15 +77,20 @@ def extract_inline_citation_dicts(answer: str) -> list[dict[str, Any]]:
 
 
 def is_fragment_answer(answer: str, min_answer_words: int = 6) -> bool:
+    raw = (answer or "").strip()
+    if re.search(r"\[\d+\]", raw):
+        return True
     text = clean_answer_text(answer)
     words = re.findall(r"\b\w+\b", text)
     if len(words) < min_answer_words:
         return True
     if not text:
         return True
-    if text[0] in ",;:)]}":
+    if text[0] in string.punctuation:
         return True
     if words and words[0].lower() in CONTINUATION_WORDS:
+        return True
+    if text[-1:] in ",;:":
         return True
     if len(text) < 80 and text[-1:] not in ".!?":
         return True
