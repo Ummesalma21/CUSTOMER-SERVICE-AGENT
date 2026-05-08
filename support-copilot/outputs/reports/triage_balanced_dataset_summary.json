@@ -1,0 +1,82 @@
+{
+  "seed": 42,
+  "eval_mixed_exclusion_file": "data\\processed\\eval_mixed_1000.jsonl",
+  "eval_mixed_exclusion_query_count": 896,
+  "excluded_overlapping_answer_source_rows": 5878,
+  "answer_pool_found_after_eval_exclusion": 48988,
+  "train_exact_overlap_with_eval_mixed": 0,
+  "targets": {
+    "train": {
+      "ANSWER": 8000,
+      "TICKET": 5000,
+      "REJECT": 5000
+    },
+    "val": {
+      "ANSWER": 1000,
+      "TICKET": 500,
+      "REJECT": 500
+    },
+    "test": {
+      "ANSWER": 1000,
+      "TICKET": 500,
+      "REJECT": 500
+    }
+  },
+  "outputs": {
+    "train": {
+      "path": "data\\processed\\triage_train_balanced.jsonl",
+      "count": 18000,
+      "labels": {
+        "TICKET": 5000,
+        "ANSWER": 8000,
+        "REJECT": 5000
+      },
+      "source_types": {
+        "synthetic_ticket_account_specific": 5000,
+        "multidoc2dial_answer": 8000,
+        "synthetic_reject_hard_support_like": 2500,
+        "synthetic_reject_near_boundary": 1500,
+        "synthetic_reject_easy": 1000
+      }
+    },
+    "val": {
+      "path": "data\\processed\\triage_val_balanced.jsonl",
+      "count": 2000,
+      "labels": {
+        "TICKET": 500,
+        "REJECT": 500,
+        "ANSWER": 1000
+      },
+      "source_types": {
+        "synthetic_ticket_account_specific": 500,
+        "synthetic_reject_easy": 100,
+        "synthetic_reject_hard_support_like": 250,
+        "multidoc2dial_answer": 1000,
+        "synthetic_reject_near_boundary": 150
+      }
+    },
+    "test": {
+      "path": "data\\processed\\triage_test_balanced.jsonl",
+      "count": 2000,
+      "labels": {
+        "REJECT": 500,
+        "ANSWER": 1000,
+        "TICKET": 500
+      },
+      "source_types": {
+        "synthetic_reject_near_boundary": 150,
+        "synthetic_reject_hard_support_like": 250,
+        "multidoc2dial_answer": 1000,
+        "synthetic_reject_easy": 100,
+        "synthetic_ticket_account_specific": 500
+      }
+    }
+  },
+  "notes": [
+    "ANSWER rows are extracted from local MultiDoc2Dial-derived processed JSONL files.",
+    "TICKET rows are synthetic in-domain account-specific/manual-review cases.",
+    "REJECT rows are synthetic OOD: 20% easy, 50% hard support-like, 30% near-boundary.",
+    "Exact queries from data/processed/eval_mixed_1000.jsonl are excluded from ANSWER extraction when that file exists.",
+    "Similarity feature columns are included as placeholders unless already present in source rows."
+  ]
+}

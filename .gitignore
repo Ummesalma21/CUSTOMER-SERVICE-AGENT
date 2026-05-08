@@ -1,0 +1,32 @@
+# Python / local environments
+__pycache__/
+*.py[cod]
+.venv/
+.python/
+
+# Local caches and large generated artifacts
+support-copilot/data/hf_cache/
+support-copilot/checkpoints/
+support-copilot/outputs/retriever/
+support-copilot/outputs/reranker/
+support-copilot/outputs/triage/
+support-copilot/outputs/triage_balanced/
+support-copilot/outputs/preference/
+
+# Index/model binaries
+*.faiss
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.onnx
+
+# Large generated prediction dumps and processed training data
+support-copilot/data/processed/*.jsonl
+support-copilot/data/indexes/
+support-copilot/outputs/reports/*predictions*.jsonl
+support-copilot/outputs/reports/*scored.jsonl
+support-copilot/outputs/reports/tool_traces.jsonl
+
+# Logs
+support-copilot/outputs/logs/

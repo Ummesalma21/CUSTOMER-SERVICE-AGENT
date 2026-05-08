@@ -1,0 +1,31 @@
+{
+  "count": 1500,
+  "reference_available": 0,
+  "reference_note": "No gold/reference answer text was present in final_answer_only_predictions.jsonl; token F1 and ROUGE-L are not computed.",
+  "baseline": {
+    "AnswerTokenF1": null,
+    "ROUGE-L": null,
+    "AnswerOutputCount": 1500,
+    "NoFragmentRate": 0.6966666666666667,
+    "FragmentCount": 455,
+    "CitationAttachedRate": 1.0,
+    "DuplicateCitationRate": 1.0,
+    "DuplicateCitationCount": 1500,
+    "AverageAnswerLengthWords": 19.78933333333333,
+    "EmptyOrInvalidAnswerRate": 0.09066666666666667,
+    "EmptyOrInvalidAnswerCount": 136
+  },
+  "proposed": {
+    "AnswerTokenF1": null,
+    "ROUGE-L": null,
+    "AnswerOutputCount": 1482,
+    "NoFragmentRate": 0.6916329284750338,
+    "FragmentCount": 457,
+    "CitationAttachedRate": 1.0,
+    "DuplicateCitationRate": 0.9446693657219973,
+    "DuplicateCitationCount": 1400,
+    "AverageAnswerLengthWords": 16.968286099865047,
+    "EmptyOrInvalidAnswerRate": 0.0931174089068826,
+    "EmptyOrInvalidAnswerCount": 138
+  }
+}

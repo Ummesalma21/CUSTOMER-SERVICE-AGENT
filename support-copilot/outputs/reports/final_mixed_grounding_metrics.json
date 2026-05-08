@@ -1,0 +1,73 @@
+{
+  "config": "configs\\final_eval_balanced_triage_best.yaml",
+  "predictions": "outputs/reports/final_mixed_best_predictions.jsonl",
+  "count": 1000,
+  "baseline": {
+    "SupportedResponseRate": 0.551,
+    "UnsupportedAnswerRate": 0.449,
+    "EvidenceUseAccuracy": 0.6,
+    "per_label": {
+      "TICKET": {
+        "SupportedResponseRate": 0.0,
+        "UnsupportedAnswerRate": 1.0,
+        "EvidenceUseAccuracy": 0.0,
+        "count": 200
+      },
+      "ANSWER": {
+        "SupportedResponseRate": 0.9183333333333333,
+        "UnsupportedAnswerRate": 0.08166666666666667,
+        "EvidenceUseAccuracy": 1.0,
+        "count": 600
+      },
+      "REJECT": {
+        "SupportedResponseRate": 0.0,
+        "UnsupportedAnswerRate": 1.0,
+        "EvidenceUseAccuracy": 0.0,
+        "count": 200
+      }
+    }
+  },
+  "proposed": {
+    "SupportedResponseRate": 0.718,
+    "UnsupportedAnswerRate": 0.282,
+    "EvidenceUseAccuracy": 0.765,
+    "per_label": {
+      "TICKET": {
+        "SupportedResponseRate": 0.445,
+        "UnsupportedAnswerRate": 0.555,
+        "EvidenceUseAccuracy": 0.445,
+        "count": 200
+      },
+      "ANSWER": {
+        "SupportedResponseRate": 0.91,
+        "UnsupportedAnswerRate": 0.09,
+        "EvidenceUseAccuracy": 0.9883333333333333,
+        "count": 600
+      },
+      "REJECT": {
+        "SupportedResponseRate": 0.415,
+        "UnsupportedAnswerRate": 0.585,
+        "EvidenceUseAccuracy": 0.415,
+        "count": 200
+      }
+    }
+  },
+  "answer_only_grounding": {
+    "baseline": {
+      "Recall@5": 0.415,
+      "MRR@10": 0.3116666666666667,
+      "EvidenceHit@5": 0.415,
+      "CitationPrecision": 1.0
+    },
+    "proposed": {
+      "Recall@5": 0.415,
+      "MRR@10": 0.30869444444444455,
+      "EvidenceHit@5": 0.415,
+      "CitationPrecision": 1.0
+    }
+  },
+  "workflow_macro_f1": {
+    "baseline": 0.24999999999999997,
+    "proposed": 0.6742703572301131
+  }
+}

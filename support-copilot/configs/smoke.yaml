@@ -1,0 +1,25 @@
+mode: smoke
+seed: 42
+device: auto
+max_train_samples: 300
+max_eval_samples: 100
+max_kb_chunks: 1000
+retriever_epochs: 1
+reranker_epochs: 1
+triage_epochs: 1
+preference_epochs: 1
+generator_epochs: 0
+batch_size: 8
+reranker_batch_size: 4
+triage_batch_size: 8
+gradient_accumulation_steps: 1
+fp16: true
+top_k_retrieval: 10
+top_k_rerank: 5
+top_k_domains: 2
+mu_boundary: 0.15
+lambda_boundary: 0.6
+tau_domain: 0.22
+tau_chunk: 0.16
+use_hf_dataset: false
+

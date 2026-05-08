@@ -1,0 +1,41 @@
+triage:
+  model_name: distilbert-base-uncased
+  train_file: data/processed/triage_train_balanced.jsonl
+  val_file: data/processed/triage_val_balanced.jsonl
+  test_file: data/processed/triage_test_balanced.jsonl
+  output_dir: outputs/triage_balanced/distilbert
+
+  labels:
+    - ANSWER
+    - TICKET
+    - REJECT
+
+  epochs: 3
+  batch_size: 8
+  gradient_accumulation_steps: 2
+  fp16: true
+  learning_rate: 2.0e-5
+  weight_decay: 0.01
+  max_length: 192
+
+  loss:
+    type: ce_plus_boundary
+    boundary_margin_mu: 0.15
+    lambda_boundary: 0.5
+    class_weights:
+      ANSWER: 1.0
+      TICKET: 1.3
+      REJECT: 1.5
+
+  feature_fields:
+    - lexical_gate_score
+    - nearest_kb_similarity
+    - max_centroid_similarity
+    - centroid_margin
+    - top1_retrieval_score
+    - top5_mean_retrieval_score
+
+evaluation:
+  mixed_eval_file: data/processed/eval_mixed_1000.jsonl
+  output_metrics: outputs/reports/mixed_eval_balanced_triage_metrics.json
+  output_summary: outputs/reports/mixed_eval_balanced_triage_summary.md
