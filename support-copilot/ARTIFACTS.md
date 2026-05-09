@@ -49,7 +49,7 @@ Expected regenerated locations:
 - reranker checkpoint: `outputs/reranker/`
 - triage checkpoints: `outputs/triage/`, `outputs/triage_balanced/`
 - preference/rubric outputs: `outputs/preference/`
-- generator checkpoint: `outputs/generator/`
+- generator/synthesis artifacts: `outputs/generator/`
 - final reports: `outputs/reports/`
 
 ## Run Without Retraining

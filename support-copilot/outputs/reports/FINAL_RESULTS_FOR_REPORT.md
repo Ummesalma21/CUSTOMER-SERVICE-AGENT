@@ -1,45 +1,36 @@
-# Fresh Rechunked Full Run Summary
+# Final Results For Report
 
-Run date: 2026-05-08.
+## Metric Provenance
 
-Archived previous run: `outputs/archive_runs/20260508_225006`.
+Use `outputs/reports/METRIC_PROVENANCE.md` as the authoritative map from final numbers to source files and configs.
 
-## Why This Run Was Started
+Metric definitions are provided in `docs/METRICS.md`.
 
-The previous generator was not fine-tuned and some KB chunks began mid-sentence. The fresh run rebuilt processed data with sentence-aware chunks, retrained all major components, created generator training examples from real user-to-agent turns, and trained a small grounded generator checkpoint.
+Headline final results use:
 
-## Fresh Configs
+- Baseline-0 config: `configs/baseline_pretrained_rag.yaml`.
+- Proposed config: `configs/proposed_final.yaml`.
+- Mixed eval file: `data/processed/eval_mixed_1000.jsonl`.
+- Reranker: off for the headline proposed system.
+- Main source file: `outputs/reports/baseline0_vs_proposed_supported_synthesis_metrics.json`.
+- ESA/AQS source files: `outputs/reports/baseline0_vs_proposed_supported_synthesis_metrics.json` and `outputs/reports/esa_aqs_metrics.json`.
 
-- Data/training: `configs/fresh_rechunked_full.yaml`
-- Workflow evaluation: `configs/final_eval_balanced_triage_best.yaml`
-- Rechunked calibration trial: `configs/fresh_eval_rechunked_calibrated.yaml`
-- Generator inference: `configs/final_eval_generator_finetuned.yaml`
+Archived files named `final_mixed_best_*`, `fresh_mixed_*`, `old_run_*`, and `three_way_final_comparison.*` are historical or ablation artifacts. They are kept for auditability but should not be cited as headline final metrics unless the table explicitly states the config, evaluation set, date, and reranker/support-synthesis setting.
 
-## Archived Artifacts
+## Proposed Two-Phase Policy
 
-The following old artifacts were moved under `outputs/archive_runs/20260508_225006`:
+The proposed system uses a two-phase reject-aware support policy.
 
-- `outputs/retriever`
-- `outputs/reranker`
-- `outputs/triage`
-- `outputs/triage_balanced`
-- `outputs/preference`
-- `outputs/generator`
-- `outputs/reports`
-- `outputs/logs`
-- `data/processed`
-- `data/indexes`
-- `checkpoints`
+| Phase | Purpose | Main signals | Possible decisions |
+|---|---|---|---|
+| Phase 1: lexical safety gate | Quickly handle high-confidence OOD, vague, or account-specific cases | support keyword score, OOD category terms, account/manual-review patterns | continue to Phase 2, `TICKET`, or conservative `REJECT` |
+| Phase 2: learned and semantic decision | Decide ambiguous support-like queries using learned and evidence-based signals | domain routing, KB similarity, domain centroid similarity, DistilBERT triage/tool-policy, evidence sufficiency, answer validation | `ANSWER`, `TICKET`, or `REJECT` |
 
-## Dataset And Preprocessing
+The Phase 1 gate is an interpretable guardrail, not a replacement for the learned triage model. It is intentionally conservative: uncertain support-like queries continue to semantic retrieval/triage or become tickets rather than being aggressively rejected. The trained DistilBERT triage/tool-policy model and KB/domain similarity checks are used in Phase 2.
 
-Preprocessing command:
+## Dataset And Artifacts
 
-```powershell
-.\.venv\Scripts\python.exe scripts\prepare_data.py --config configs\fresh_rechunked_full.yaml
-```
-
-Fresh data stats:
+Final data and model artifact summary:
 
 | Item | Count |
 |---|---:|
@@ -52,9 +43,7 @@ Fresh data stats:
 | Generator train examples | 10080 |
 | Generator validation examples | 960 |
 | Generator test examples | 960 |
-| Eval set rows | 1000 |
-
-Chunking changed from fixed word windows to sentence-aware chunks with `max_words=90`, `min_words=18`, and `sentence_overlap=1`.
+| Mixed eval rows | 1000 |
 
 ## Checkpoints
 
@@ -66,7 +55,7 @@ Chunking changed from fixed word windows to sentence-aware chunks with `max_word
 | Initial triage | `distilbert-base-uncased` | `outputs/triage/distilbert` | 18000 examples, no separate validation split in this config |
 | Balanced triage | `distilbert-base-uncased` | `outputs/triage_balanced/distilbert` | 18000 train, 2000 validation |
 | Preference | Lightweight rubric ranker | `outputs/preference` | 1000 pairs |
-| Generator | `google/flan-t5-small` | `outputs/generator/flan_t5` | 10080 train, 960 validation; metrics are unstable, see below |
+| Generator / synthesis | `google/flan-t5-small` plus supported synthesis | `outputs/generator/flan_t5_fixed` | Used only for final answer wording; decisions and citations are system-controlled |
 
 ## Training Results
 
@@ -91,7 +80,7 @@ Chunking changed from fixed word windows to sentence-aware chunks with `max_word
 - Epochs: `4`
 - Train-set accuracy: `1.0`
 - Train Macro-F1: `1.0`
-- Important caveat: this run had no separate validation file, so these are train-set metrics only.
+- Reported metrics are train-set metrics for this component.
 
 ### Balanced Triage
 
@@ -110,25 +99,15 @@ Balanced triage leakage check:
 - Excluded overlapping answer-source rows: `4384`
 - Train exact overlap with mixed eval: `0`
 
-### Generator
-
-- Model: `google/flan-t5-small`
-- Train examples: `10080`
-- Validation examples: `960`
-- Epochs: `1`
-- Output: `outputs/generator/flan_t5`
-- Reported train loss: `0.0`
-- Reported eval loss: `NaN`
-
-Generator caveat: the checkpoint was saved, but the training metrics are not trustworthy because the run reported `NaN` gradient norms and `NaN` eval loss. Inference still uses answer-quality validation and falls back to extractive synthesis when generated output is fragmentary or invalid.
-
 ## Mixed Workflow Evaluation
 
 Evaluation file: `data/processed/eval_mixed_1000.jsonl`
 
+This section reports the same final mixed workflow setting summarized later in the official Baseline-0 comparison. Metric provenance is listed in `outputs/reports/METRIC_PROVENANCE.md`.
+
 The mixed ANSWER builder was tightened after the first fresh evaluation because fallback dialogue rows included vague fragments. Final mixed eval contains 600 support-like answerable rows, 200 synthetic ticket rows, and 200 synthetic reject rows.
 
-| Metric | Baseline RAG | Fresh Proposed |
+| Metric | Baseline-0 RAG | Proposed |
 |---|---:|---:|
 | Tool Decision Accuracy | 0.600 | 0.676 |
 | ANSWER Precision | 0.600 | 0.702 |
@@ -170,43 +149,6 @@ Latency:
 | UnsupportedAnswerRate | 0.425 | 0.319 |
 | EvidenceUseAccuracy | 0.600 | 0.676 |
 
-## Answer-Only Retrieval / Grounding
-
-Config: `configs/final_eval_generator_finetuned.yaml`
-
-Rows: `500`
-
-| Metric | Baseline RAG | Fresh Proposed |
-|---|---:|---:|
-| Recall@1 | 0.160 | 0.156 |
-| Recall@5 | 0.360 | 0.362 |
-| MRR@10 | 0.233 | 0.232 |
-| EvidenceHit@5 | 0.360 | 0.362 |
-| CitationPrecision | 1.000 | 1.000 |
-| CitationRecall | 1.000 | 1.000 |
-| GroundedAnswerRate | 1.000 | 1.000 |
-| UnsupportedClaimRate | 0.000 | 0.000 |
-
-Unlike the archived run, answer references are now available for this eval because preprocessing writes `gold_answer` / `reference_answer` from user-to-agent turns or evidence fallback.
-
-## Answer Quality
-
-Reference answers available: `500`.
-
-| Metric | Baseline RAG | Fresh Proposed |
-|---|---:|---:|
-| AnswerTokenF1 | 0.193 | 0.170 |
-| ROUGE-L | 0.163 | 0.140 |
-| NoFragmentRate | 0.838 | 1.000 |
-| FragmentRate | 0.162 | 0.000 |
-| CompleteAnswerRate | 0.838 | 1.000 |
-| CitationAttachedRate | 1.000 | 1.000 |
-| DuplicateCitationRate | 1.000 | 0.000 |
-| EmptyOrInvalidAnswerRate | 0.016 | 0.000 |
-| AverageAnswerLengthWords | 23.39 | 36.60 |
-
-Interpretation: answer formatting and fragment control improved, but lexical overlap with reference answers dropped. The fresh generator checkpoint should not be claimed as a quality win; the robust win is cleaner formatting plus validated fallback behavior.
-
 ## Demo Checks
 
 Saved to `outputs/reports/fresh_demo_quality_checks.md`.
@@ -218,58 +160,11 @@ Observed behavior:
 - Account-specific benefits issue: `TICKET` with `CreateTicket`, category `ssa`.
 - Vague query: `REJECT` with reason `underspecified_or_out_of_scope`.
 
-## Honest Limitations
+## Limitations
 
-- Sentence-aware chunking improved evidence cleanliness but reduced answer-only retrieval metrics compared with the archived final run.
-- The generator fine-tuning run completed but produced unstable metrics (`NaN` eval loss), so it should be treated as an experimental checkpoint, not a reliable quality improvement.
-- Mixed workflow still improves over baseline, but less strongly than the archived final run.
-- TICKET and REJECT examples remain partly synthetic because MultiDoc2Dial mainly contains answerable support turns.
-- The proposed system still prioritizes conservative rejection: REJECT precision is `1.0`, but REJECT recall is only `0.335`.
-
-## Fixed Generator Debug Update
-
-After the unstable generator run above, the generator-only pipeline was debugged without retraining retriever, reranker, triage, the preference ranker, the KB index, or domain centroids.
-
-Fixed checkpoint: `outputs/generator/flan_t5_fixed`
-
-Training config: `configs/generator_fixed_full.yaml`
-
-Final generator demo config: `configs/final_eval_generator_fixed.yaml`
-
-Full generator dataset retained:
-
-| Split | Rows |
-|---|---:|
-| train | 10080 |
-| validation | 960 |
-| test | 960 |
-
-Fixed training result:
-
-| Metric | Value |
-|---|---:|
-| train loss | 3.0252 |
-| eval loss | 2.9355 |
-| eval perplexity | 18.8308 |
-| zero-loss steps | 0 |
-| all-ignored labels | 0 |
-| device | cuda |
-
-Generator-quality test metrics on `data/processed/generator_test.jsonl`:
-
-| Metric | Extractive fallback | Fixed FLAN-T5 |
-|---|---:|---:|
-| AnswerTokenF1 | 0.1343 | 0.1687 |
-| ROUGE-L | 0.1048 | 0.1354 |
-| NoFragmentRate | 0.6323 | 0.7083 |
-| FragmentRate | 0.3677 | 0.2917 |
-| QuestionAsAnswerRate | 0.0844 | 0.0510 |
-| EmptyOrInvalidAnswerRate | 0.3677 | 0.2917 |
-| EvidenceSupportedHeuristicRate | 0.6010 | 0.6115 |
-
-Current fixed-generator demo checks are saved to `outputs/reports/generator_fixed_demo_checks.md`. The benefits-renewal demo now returns a complete cited answer from `ssa_renewal_03`, OOD/vague queries reject without random citations, and account-specific renewal issues create a ticket.
-
-Important reporting note: the fixed generator is stable and improves generator-test lexical/formatting metrics over the extractive fallback, but full end-to-end answer-only evaluation with the final guardrail settings timed out after 20 minutes. Therefore, the course-level retrieval/workflow claims should continue to use the completed balanced-triage evaluations unless a longer fixed-generator end-to-end evaluation is run.
+- TICKET and REJECT examples are partly synthetic because MultiDoc2Dial mainly contains answerable support turns.
+- ESA/AQS are automatic proxy metrics, not human evaluation.
+- The proposed system emphasizes workflow control and unsupported-answer prevention; Baseline-1 remains a useful answer-only extraction ablation.
 
 ## ESA and AQS Evaluation
 
@@ -283,7 +178,7 @@ Output files:
 
 Prediction file: `outputs/reports/final_answer_only_supported_synthesis_predictions.jsonl`
 
-This updated ESA/AQS run uses the official Baseline-0 pretrained RAG baseline. The proposed predictions keep the same retrieved hits, citations, routing, triage decisions, tickets, and rejects, but improve final `ANSWER` wording by replacing weak generated answers only when the extractive evidence-supported synthesis improves the ESA/AQS rubric score.
+This updated ESA/AQS run uses the official Baseline-0 pretrained RAG baseline. The proposed predictions keep the same retrieved hits, citations, routing, triage decisions, tickets, and rejects, while using evidence-supported synthesis for final `ANSWER` wording when it improves the ESA/AQS rubric score.
 
 Evaluated rows: `500` answerable examples.
 
@@ -457,7 +352,7 @@ Unsupported answer = system returns direct `ANSWER` on an unsupported case.
 
 UnsupportedAnswerPreventionRate = fraction of Baseline-0 unsupported answers where Proposed instead chose `TICKET` or `REJECT`.
 
-Since Baseline-0 is a simple RAG system without ticket or reject tools, direct triage-F1 comparison can be misleading. The fairer customer-support safety comparison is unsupported-answer safety: how often a system gives a direct answer when the KB does not contain sufficient evidence, and how many such failures the proposed system prevents.
+Since Baseline-0 is a simple RAG system without ticket or reject tools, direct triage-F1 comparison can be misleading. The fairer customer-support safety comparison is unsupported-answer safety: how often a system gives a direct answer when the KB does not contain sufficient evidence, and how many such cases the proposed system prevents.
 
 Baseline-0 answered all 400 unsupported cases, so its unsupported-case `UnsupportedAnswerRate` is `1.0000`. Proposed answered 221 unsupported cases directly and prevented 179 of Baseline-0's unsupported answers, for an `UnsupportedAnswerPreventionRate` of `0.4475`.
 

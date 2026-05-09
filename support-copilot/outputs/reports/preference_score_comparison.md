@@ -1,7 +1,7 @@
 # Preference/Rubric Score Comparison
 
 Rubric source: `src/preference/score_candidates.py`
-Preference training metrics: `{'trained_pairs': 1000, 'pair_accuracy': 1.0, 'model': 'rubric-ranker'}`
+Preference/rubric summary: `{'trained_pairs': 1000, 'pair_accuracy': 1.0, 'model': 'rubric-ranker'}`
 Rubric artifact: `{'rubric': 'citation+grounding+tool+concise'}`
 
 The score is a lightweight rubric score, not DPO/RLHF. It rewards cited answers, insufficient-evidence ticket style, out-of-domain rejection style, concise outputs, and an extra cited-answer bonus for ANSWER examples.

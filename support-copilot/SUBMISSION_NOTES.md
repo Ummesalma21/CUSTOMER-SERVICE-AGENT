@@ -5,7 +5,7 @@
 Include:
 
 - source code: `src/`, `scripts/`, `schemas/`, `run_all.py`, `app_streamlit.py`
-- docs: `README.md`, `DEMO_UI.md`, `SUBMISSION_NOTES.md`, `FINAL_SUBMISSION_CHECKLIST.md`
+- docs: `README.md`, `DEMO_UI.md`, `SUBMISSION_NOTES.md`, `FINAL_SUBMISSION_CHECKLIST.md`, `docs/`
 - artifact details: `ARTIFACTS.md`
 - final configs: `configs/`
 - small processed metadata needed by routing: `data/processed/domain_centroids.json`, `data/processed/domain_keywords.json`
@@ -76,6 +76,8 @@ Final results are in:
 - `outputs/reports/baseline0_vs_proposed_summary.md`
 - `outputs/reports/esa_aqs_summary.md`
 - `outputs/reports/unsupported_answer_safety_summary.md`
+
+Metric definitions are in `docs/METRICS.md`. The two-phase policy is described in `docs/GUARDRAILS.md`.
 
 Older experiments were moved to one top-level archive:
 

@@ -4,6 +4,16 @@
 
 This project builds a customer-support RAG system over MultiDoc2Dial-style support knowledge bases. The system retrieves cited KB evidence, routes questions to support domains, validates answerability, and chooses one support action: `ANSWER`, `TICKET`, or `REJECT`. The final claim is deliberately narrow: compared with a simple pretrained RAG baseline, the proposed system preserves answer retrieval while improving support workflow control and unsupported-answer safety.
 
+## Proposed Method
+
+The proposed system uses a **two-phase reject-aware policy**.
+
+**Phase 1: lexical safety gate.** A lightweight, interpretable gate catches high-confidence cases before expensive generation: obvious out-of-domain requests, vague unsupported questions, and account-specific/manual-review support issues. This phase is conservative and is not meant to reject answerable support questions.
+
+**Phase 2: learned and semantic decision.** Queries that pass Phase 1 use domain routing, nearest-KB similarity, domain centroid similarity, a trained DistilBERT triage/tool-policy model, evidence sufficiency checks, and answer-quality validation. This phase chooses `ANSWER`, `TICKET`, or `REJECT` using retrieved evidence and learned support-workflow signals.
+
+The design is hybrid by intent: Phase 1 provides transparent safety guardrails, while Phase 2 provides the learned retrieval, routing, and triage behavior.
+
 ## Final Systems
 
 - **Baseline-0 Pretrained RAG**: official assignment baseline in `configs/baseline_pretrained_rag.yaml`. It uses pretrained `sentence-transformers/all-MiniLM-L6-v2`, full KB search, no reranker, no routing, no triage/tool-policy, no ticketing, no rejection, and always returns `ANSWER` with a citation.
@@ -17,6 +27,7 @@ Additional submission notes:
 
 - artifact and regeneration path: `ARTIFACTS.md`
 - answerability/safety guardrails: `docs/GUARDRAILS.md`
+- metric definitions: `docs/METRICS.md`
 - synthetic TICKET/REJECT data: `docs/SYNTHETIC_DATA.md`
 - preference/rubric module: `docs/PREFERENCE_RUBRIC.md`
 
@@ -104,6 +115,10 @@ Threshold ablation:
 
 ## Final Results
 
+Headline metrics are reported from one final setting: Baseline-0 `configs/baseline_pretrained_rag.yaml` versus Proposed `configs/proposed_final.yaml`, reranker off, evaluated on `data/processed/eval_mixed_1000.jsonl` and the answer-only evaluation set. The source files are `outputs/reports/baseline0_vs_proposed_supported_synthesis_metrics.json`, `outputs/reports/esa_aqs_metrics.json`, and `outputs/reports/METRIC_PROVENANCE.md`.
+
+Metric definitions are in `docs/METRICS.md`.
+
 | Metric | Baseline-0 Pretrained RAG | Proposed Final |
 |---|---:|---:|
 | Recall@5 | 0.1820 | 0.3620 |
@@ -117,14 +132,16 @@ Threshold ablation:
 
 Final report files live in `outputs/reports/`; start with `outputs/reports/FINAL_RESULTS_FOR_REPORT.md` and `outputs/reports/REPORT_INDEX.md`.
 
+Metric hygiene note: older files with names such as `final_mixed_best_*`, `fresh_mixed_*`, `old_run_*`, and `three_way_final_comparison.*` are archived historical runs. They are not the headline final results unless explicitly labeled as an ablation. See `outputs/reports/METRIC_PROVENANCE.md`.
+
 The proposed system improves ESA/AQS over the official Baseline-0 pretrained RAG baseline. The fine-tuned RAG ablation remains stronger on extraction-style answer-only ESA/AQS, so grounded generation should still be treated as a limitation. ESA/AQS are automatic proxy metrics, not human evaluation.
 
 ## Ablations
 
-- **Safety tuned**: prevents more unsupported answers, but lowers ESA/AQS and tickets more answerable cases.
-- **Reranker**: improves some mixed workflow safety metrics, but hurts answer-only evidence quality and adds latency.
+- **Safety tuned**: trades answer-quality proxy score for stronger unsupported-answer prevention.
+- **Reranker**: evaluated as a separate workflow-safety and latency ablation.
 - **Fine-tuned RAG**: strong answer-only extraction ablation, but lacks ticket/reject workflow control.
-- **Generator**: answer quality remains a limitation; supported synthesis improves ESA/AQS, but this is not a substitute for a fully trained grounded generator.
+- **Generator / synthesis**: used as a bounded answer-formulation layer; supported synthesis improves ESA/AQS while citations remain system-attached.
 
 ## Limitations
 
@@ -132,4 +149,4 @@ The proposed system improves ESA/AQS over the official Baseline-0 pretrained RAG
 - The proposed system improves workflow and safety more than retrieval quality.
 - Reject behavior is intentionally conservative to avoid rejecting answerable support questions.
 - ESA/AQS are automatic proxy metrics, not human evaluation.
-- The archive contains older failed or intermediate experiments for auditability, but they are not the final submitted results.
+- The archive contains intermediate experiments for auditability, but they are not the final submitted results.

@@ -8,7 +8,7 @@
 - [x] Tool schema JSON exists at `schemas/tool_schema.json`.
 - [x] Final metrics files exist under `outputs/reports/`.
 - [x] Log directory exists at `outputs/logs/`; large logs are ignored by git.
-- [x] Old failed/intermediate results are archived under `outputs/reports/archive/`.
+- [x] Older intermediate results are archived under the top-level `archive/` folder.
 - [x] Limitations are stated honestly in `README.md` and `outputs/reports/FINAL_RESULTS_FOR_REPORT.md`.
 - [x] Exact demo-query strings are not used in inference decision logic. They appear only in docs, demo examples, regression checks, synthetic evaluation fixtures, or data fixtures.
 - [x] `.gitignore` excludes local environments, caches, model binaries, indexes, raw data, large prediction dumps, and logs.

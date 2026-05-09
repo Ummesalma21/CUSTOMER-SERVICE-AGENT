@@ -15,7 +15,7 @@ MultiDoc2Dial mainly contains answerable document-grounded dialogue turns. The p
 TICKET examples cover patterns such as:
 
 - account or case status checks
-- failed or duplicate payments
+- payment issues and duplicate charges
 - document upload problems
 - manual review requests
 - portal/account-specific support issues

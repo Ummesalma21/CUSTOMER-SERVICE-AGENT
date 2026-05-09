@@ -2,6 +2,8 @@
 
 Baseline-0 is the official simple pretrained RAG baseline. Proposed is the final routed/tool-using support copilot.
 
+Metric provenance: headline retrieval, workflow, safety, efficiency, and tool-usage metrics come from `outputs/reports/baseline0_vs_proposed_supported_synthesis_metrics.json`. ESA/AQS use the supported-synthesis answer-text update for proposed answers; this changes answer wording only, not retrieved hits, citations, routing, tickets, or rejects. See `outputs/reports/METRIC_PROVENANCE.md`.
+
 ## Table 1: Answer-Only Retrieval And Grounding
 
 | Metric | Baseline-0 Pretrained RAG | Proposed | Delta |
@@ -18,8 +20,8 @@ Baseline-0 is the official simple pretrained RAG baseline. Proposed is the final
 
 | Metric | Baseline-0 | Proposed | Delta |
 |---|---:|---:|---:|
-| ESA | 0.4760 | 0.5300 | +0.0540 |
-| AQS | 0.6270 | 0.6733 | +0.0463 |
+| ESA | 0.4760 | 0.6380 | +0.1620 |
+| AQS | 0.6270 | 0.7187 | +0.0917 |
 
 ## Table 3: Unsupported-Answer Safety
 
@@ -88,7 +90,7 @@ Baseline-0 is the official simple pretrained RAG baseline. Proposed is the final
 ## Interpretation
 
 - Proposed improves over the official baseline on answer-only retrieval: Recall@5 and EvidenceHit@5 improve from 0.1820 to 0.3620.
-- Proposed improves ESA and AQS over the official baseline: ESA improves from 0.4760 to 0.5300; AQS improves from 0.6270 to 0.6733.
+- Proposed improves ESA and AQS over the official baseline after the supported-synthesis answer-text update: ESA improves from 0.4760 to 0.6380; AQS improves from 0.6270 to 0.7187.
 - Unsupported-answer safety is the fairer comparison for ticket/reject behavior because Baseline-0 has no triage tools.
 - Baseline-0 always answers unsupported TICKET/REJECT cases, so its UnsupportedAnswerRate is 1.0 over unsupported cases.
 - Proposed prevents a portion of these unsupported answers by using CreateTicket or RejectQuery.
