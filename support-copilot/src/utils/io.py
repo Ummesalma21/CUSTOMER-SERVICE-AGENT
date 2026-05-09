@@ -20,7 +20,7 @@ def ensure_dir(path: str | Path) -> Path:
 
 def read_jsonl(path: str | Path) -> list[dict[str, Any]]:
     p = Path(path)
-    if not p.exists():
+    if not p.exists() or p.is_dir():
         return []
     with p.open("r", encoding="utf-8") as f:
         return [json.loads(line) for line in f if line.strip()]
@@ -82,6 +82,8 @@ def normalize_config(cfg: dict[str, Any]) -> dict[str, Any]:
         "max_reranker_train_pairs": "max_reranker_train_pairs",
         "max_triage_train_examples": "max_triage_train_examples",
         "max_preference_pairs": "max_preference_pairs",
+        "max_generator_train_examples": "max_generator_train_examples",
+        "max_generator_val_examples": "max_generator_val_examples",
         "max_kb_chunks": "max_kb_chunks",
     }
     for nested, flat in mapping.items():

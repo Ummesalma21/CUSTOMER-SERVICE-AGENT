@@ -59,7 +59,15 @@ def _normalize_hf(docs_ds: Any, dial_ds: Any, max_dialogues: int | None, max_doc
             if isinstance(turns, dict):
                 users = turns.get("user_utterance") or turns.get("utterance") or []
                 turns = [{"speaker": "user", "text": t} for t in users]
-            dialogues.append({"domain": domain, "turns": turns, "raw": row})
+            norm_turns = []
+            for turn in turns:
+                if not isinstance(turn, dict):
+                    norm_turns.append({"speaker": "user", "text": str(turn), "raw": {"text": str(turn)}})
+                    continue
+                text = turn.get("utterance") or turn.get("text") or ""
+                role = turn.get("role") or turn.get("speaker") or ""
+                norm_turns.append({**turn, "speaker": _normalize_role(role), "text": text, "raw": turn})
+            dialogues.append({"domain": domain, "turns": norm_turns, "raw": row})
     return {"documents": docs, "dialogues": dialogues}
 
 
@@ -91,30 +99,30 @@ def _docs_from_doc_data(doc_data: dict[str, Any], max_documents: int | None = No
 def _dialogues_from_dial_data(dial_data: dict[str, Any], max_dialogues: int | None, current: int) -> list[dict[str, Any]]:
     dialogues: list[dict[str, Any]] = []
     for domain, domain_dialogues in dial_data.items():
-        for dialogue in domain_dialogues:
-            if max_dialogues and current + len(dialogues) >= max_dialogues:
-                return dialogues
-            turns = []
-            for turn in dialogue.get("turns", []):
-                text = turn.get("utterance") or turn.get("text") or ""
-                role = turn.get("role") or turn.get("speaker") or ""
-                turns.append({"speaker": role or "user", "text": text})
-            dialogues.append({"domain": domain, "turns": turns, "raw": dialogue})
-            continue
-        if isinstance(domain_dialogues, dict):
-            iterable = domain_dialogues.values()
-        else:
-            iterable = []
+        iterable = domain_dialogues if isinstance(domain_dialogues, list) else domain_dialogues.values()
         for dialogue in iterable:
             if max_dialogues and current + len(dialogues) >= max_dialogues:
                 return dialogues
+            if not isinstance(dialogue, dict):
+                continue
             turns = []
             for turn in dialogue.get("turns", []):
                 text = turn.get("utterance") or turn.get("text") or ""
                 role = turn.get("role") or turn.get("speaker") or ""
-                turns.append({"speaker": role or "user", "text": text})
+                turns.append({**turn, "speaker": _normalize_role(role), "text": text, "raw": turn})
             dialogues.append({"domain": domain, "turns": turns, "raw": dialogue})
     return dialogues
+
+
+def _normalize_role(role: Any) -> str:
+    text = str(role or "").strip().lower()
+    if text in {"user", "customer", "u", "client"} or "user" in text:
+        return "user"
+    if text in {"agent", "system", "assistant", "wizard", "bot", "a"} or any(
+        marker in text for marker in ["agent", "system", "assistant", "wizard"]
+    ):
+        return "agent"
+    return text or "unknown"
 
 
 def offline_fixture() -> dict[str, Any]:

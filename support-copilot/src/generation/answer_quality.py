@@ -115,6 +115,9 @@ def is_vague_query(query: str, max_centroid: float = 0.0, nearest_kb_similarity:
     }
     if normalized in vague_patterns:
         return True
+    conversational_terms = {"joke", "funny", "mood", "chat", "lighten", "trying", "feel", "hello", "hi"}
+    if not is_support_like(query) and conversational_terms.intersection(words):
+        return True
     weak_signals = max_centroid < 0.25 and nearest_kb_similarity < 0.30
     if len(words) <= 4 and weak_signals and not is_support_like(query):
         return True

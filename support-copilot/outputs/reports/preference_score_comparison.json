@@ -1,0 +1,54 @@
+{
+  "preference_model": {
+    "trained_pairs": 1000,
+    "pair_accuracy": 1.0,
+    "model": "rubric-ranker"
+  },
+  "rubric": {
+    "rubric": "citation+grounding+tool+concise"
+  },
+  "answer_only": {
+    "baseline_0_pretrained_rag": {
+      "mean_preference_score": 4.968,
+      "min_preference_score": 4.0,
+      "max_preference_score": 5.0,
+      "rows": 500
+    },
+    "baseline_1_finetuned_rag": {
+      "mean_preference_score": 4.976,
+      "min_preference_score": 4.0,
+      "max_preference_score": 5.0,
+      "rows": 500,
+      "win_rate_vs_baseline_0": 0.024
+    },
+    "proposed": {
+      "mean_preference_score": 4.12,
+      "min_preference_score": 1.0,
+      "max_preference_score": 5.0,
+      "rows": 500,
+      "win_rate_vs_baseline_0": 0.02
+    }
+  },
+  "mixed_workflow": {
+    "baseline_0_pretrained_rag": {
+      "mean_preference_score": 4.581,
+      "min_preference_score": 3.0,
+      "max_preference_score": 5.0,
+      "rows": 1000
+    },
+    "baseline_1_finetuned_rag": {
+      "mean_preference_score": 4.569,
+      "min_preference_score": 3.0,
+      "max_preference_score": 5.0,
+      "rows": 1000,
+      "win_rate_vs_baseline_0": 0.014
+    },
+    "proposed": {
+      "mean_preference_score": 3.999,
+      "min_preference_score": 2.0,
+      "max_preference_score": 5.0,
+      "rows": 1000,
+      "win_rate_vs_baseline_0": 0.016
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "measurement_note": "Baseline-0 live per-query latency was not remeasured here because the official baseline predictions were batch-generated in three_way_final_comparison. Proposed latency is loaded from saved per-query mixed-eval traces when available.",
+  "sample_size": 200,
+  "warmup_excluded": 5,
+  "baseline_0": {
+    "avg_latency_ms": null,
+    "p50_latency_ms": null,
+    "p95_latency_ms": null,
+    "throughput_qps": null,
+    "total_eval_time_sec": null
+  },
+  "proposed": {
+    "avg_latency_ms": 42.295203995890915,
+    "p50_latency_ms": 43.23674994520843,
+    "p95_latency_ms": 56.893999921157956,
+    "throughput_qps": 23.643342637551825,
+    "total_eval_time_sec": 8.459040799178183
+  }
+}

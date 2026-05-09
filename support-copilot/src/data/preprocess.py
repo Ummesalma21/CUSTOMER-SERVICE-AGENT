@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import random
+import re
 from pathlib import Path
 
 from src.data.build_kb import chunk_documents
 from src.data.load_multidoc2dial import load_multidoc2dial, offline_fixture
 from src.data.make_negatives import reject_examples, ticket_examples
 from src.data.make_preference_pairs import make_preference_pairs
+from src.data.make_generator_data import make_generator_examples, split_generator_examples
 from src.routing.domain_keywords import build_domain_keywords
 from src.routing.centroids import build_domain_centroids
 from src.retrieval.search_kb import embed_text, search
@@ -31,7 +33,13 @@ def prepare_data(config: dict) -> dict[str, int]:
         fixture = offline_fixture()
         data["documents"] = fixture["documents"] + data["documents"]
         data["dialogues"] = fixture["dialogues"] + data["dialogues"]
-    chunks = chunk_documents(data["documents"])
+    chunking = config.get("chunking") if isinstance(config.get("chunking"), dict) else {}
+    chunks = chunk_documents(
+        data["documents"],
+        max_words=int(chunking.get("max_words", config.get("chunk_max_words", 90))),
+        min_words=int(chunking.get("min_words", config.get("chunk_min_words", 18))),
+        sentence_overlap=int(chunking.get("sentence_overlap", config.get("chunk_sentence_overlap", 1))),
+    )
     max_chunks = config.get("max_kb_chunks")
     if max_chunks:
         chunks = _balanced_chunk_cap(chunks, int(max_chunks))
@@ -62,6 +70,12 @@ def prepare_data(config: dict) -> dict[str, int]:
     max_pref = config.get("max_preference_pairs")
     if max_pref:
         pref_pairs = pref_pairs[: int(max_pref)]
+    generator_examples = make_generator_examples(
+        data["dialogues"],
+        chunks,
+        int(config.get("max_generator_train_examples") or 0) or None,
+    )
+    generator_train, generator_val, generator_test = split_generator_examples(generator_examples)
     keywords = build_domain_keywords(chunks)
     centroids = build_domain_centroids(chunks, keywords)
 
@@ -72,6 +86,9 @@ def prepare_data(config: dict) -> dict[str, int]:
     write_jsonl(out / "reranker_train.jsonl", reranker_train)
     write_jsonl(out / "triage_train.jsonl", triage_train)
     write_jsonl(out / "preference_pairs.jsonl", pref_pairs)
+    write_jsonl(out / "generator_train.jsonl", generator_train)
+    write_jsonl(out / "generator_val.jsonl", generator_val)
+    write_jsonl(out / "generator_test.jsonl", generator_test)
     write_jsonl(out / "eval_set.jsonl", eval_rows)
     write_json(out / "domain_centroids.json", centroids)
     write_json(out / "domain_keywords.json", keywords)
@@ -82,6 +99,9 @@ def prepare_data(config: dict) -> dict[str, int]:
         "reranker_train": len(reranker_train),
         "triage_train": len(triage_train),
         "preference_pairs": len(pref_pairs),
+        "generator_train": len(generator_train),
+        "generator_val": len(generator_val),
+        "generator_test": len(generator_test),
         "eval_set": len(eval_rows),
         "dataset_source": data.get("source", "unknown"),
     }
@@ -97,8 +117,8 @@ def _dialogue_turns(dialogues: list[dict], chunks: list[dict]) -> list[dict]:
         domain = dialogue.get("domain", "unknown")
         for turn in dialogue.get("turns", []):
             text = turn.get("text") or turn.get("utterance") or ""
-            speaker = str(turn.get("speaker", "user")).lower()
-            if not text or ("user" not in speaker and speaker not in {"u", "customer"}):
+            speaker = str(turn.get("speaker", "unknown")).lower()
+            if not text or not _is_user_speaker(speaker):
                 continue
             best = None
             if domain in indexes:
@@ -115,9 +135,44 @@ def _dialogue_turns(dialogues: list[dict], chunks: list[dict]) -> list[dict]:
                     "gold_chunk_id": best["chunk_id"],
                     "gold_domain": best["domain"],
                     "gold_triage": "ANSWER",
+                    "gold_answer": _next_agent_text(dialogue.get("turns", []), turn) or _best_evidence_sentence(best["text"]),
+                    "reference_answer": _next_agent_text(dialogue.get("turns", []), turn) or _best_evidence_sentence(best["text"]),
                 }
             )
     return rows
+
+
+def _is_user_speaker(speaker: str) -> bool:
+    return speaker in {"user", "u", "customer", "client"} or "user" in speaker or "customer" in speaker
+
+
+def _is_agent_speaker(speaker: str) -> bool:
+    return speaker in {"agent", "assistant", "system", "wizard", "bot", "a"} or any(
+        marker in speaker for marker in ["agent", "assistant", "system", "wizard"]
+    )
+
+
+def _next_agent_text(turns: list[dict], current_turn: dict) -> str | None:
+    try:
+        start = next(i for i, item in enumerate(turns) if item is current_turn)
+    except StopIteration:
+        return None
+    for nxt in turns[start + 1 : start + 4]:
+        if _is_user_speaker(str(nxt.get("speaker", "")).lower()):
+            return None
+        if _is_agent_speaker(str(nxt.get("speaker", "")).lower()):
+            text = " ".join(str(nxt.get("text") or nxt.get("utterance") or "").split())
+            if len(text.split()) >= 6:
+                return text
+    return None
+
+
+def _best_evidence_sentence(text: str) -> str:
+    sentences = re.split(r"(?<=[.!?])\s+", text.strip())
+    for sentence in sentences:
+        if len(sentence.split()) >= 6:
+            return sentence.strip()
+    return text.strip()
 
 
 def _domain_indexes(chunks: list[dict]) -> dict[str, dict]:

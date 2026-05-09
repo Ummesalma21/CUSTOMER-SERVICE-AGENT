@@ -1,0 +1,28 @@
+{
+  "model_name": "google/flan-t5-small",
+  "output_dir": "outputs\\generator\\flan_t5_fixed",
+  "train_examples": 10080,
+  "val_examples": 960,
+  "epochs": 1,
+  "batch_size": 2,
+  "gradient_accumulation_steps": 8,
+  "learning_rate": 5e-05,
+  "weight_decay": 0.01,
+  "gradient_clip_norm": 1.0,
+  "fp16": false,
+  "device": "cuda",
+  "train_runtime": 2507.8100343000006,
+  "train_loss": 3.025196335240016,
+  "eval_loss": 2.9354927353560925,
+  "eval_perplexity": 18.830779440428255,
+  "zero_loss_steps": 0,
+  "optimizer_steps": 630,
+  "label_diagnostics": {
+    "examples": 10080,
+    "all_ignored": 0,
+    "all_ignored_rate": 0.0,
+    "min_non_ignored_tokens": 10,
+    "avg_non_ignored_tokens": 29.36468253968254,
+    "max_non_ignored_tokens": 96
+  }
+}

@@ -12,7 +12,13 @@ from src.presentation import format_tool_trace, presentation_result, reject_from
 from src.utils.io import load_config
 
 
-DEFAULT_CONFIG = "configs/final_eval_generator.yaml" if Path("configs/final_eval_generator.yaml").exists() else "configs/final_eval_balanced_triage_best.yaml"
+DEFAULT_CONFIG = (
+    "configs/final_eval_generator_fixed.yaml"
+    if Path("configs/final_eval_generator_fixed.yaml").exists()
+    else "configs/final_eval_generator.yaml"
+    if Path("configs/final_eval_generator.yaml").exists()
+    else "configs/final_eval_balanced_triage_best.yaml"
+)
 EXAMPLES = [
     "Can I renew my benefits online?",
     "Who won the IPL yesterday?",
@@ -58,6 +64,11 @@ def main() -> None:
     if decision == "TICKET":
         display_answer = display_answer.split("Ticket ID:")[0].strip()
     st.info(display_answer)
+    generator = result.get("generator") or {}
+    if generator:
+        model_name = str(generator.get("model_name") or "")
+        label = "extractive fallback" if "extractive" in model_name or generator.get("fallback_reason") else "flan-t5-fixed"
+        st.caption(f"Generator: {label} ({model_name or 'not used'})")
     if decision == "ANSWER":
         st.markdown("### Citations")
         citations = result.get("citations") or []

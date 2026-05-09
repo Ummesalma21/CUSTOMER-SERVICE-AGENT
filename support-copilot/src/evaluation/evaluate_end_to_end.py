@@ -115,7 +115,18 @@ def run_proposed(query: str, config: dict) -> dict:
             confidence=0.8,
         )
         return _pack(query, "REJECT", ret["message"], [], [], ex.traces, triage, start, domains)
-    return _pack(query, "ANSWER", validation["answer"], hits, validation["citations"], ex.traces, triage, start, domains)
+    return _pack(
+        query,
+        "ANSWER",
+        validation["answer"],
+        hits,
+        validation["citations"],
+        ex.traces,
+        triage,
+        start,
+        domains,
+        generator_info=answer_result,
+    )
 
 
 def _ticket_like_support_issue(query: str, lexical_gate: dict, max_centroid: float, config: dict) -> bool:
@@ -197,9 +208,10 @@ def _apply_triage_thresholds(
 def _grounded_answer(query: str, hits: list[dict], config: dict) -> dict:
     generation = config.get("generation", {}) if isinstance(config.get("generation"), dict) else {}
     if bool(generation.get("enabled", False)):
+        top_evidence = max(1, min(3, int(generation.get("top_evidence_count", 1))))
         return generate_grounded_answer(
             query=query,
-            evidence_passages=hits[:3],
+            evidence_passages=hits[:top_evidence],
             model_name=str(generation.get("model_name", "google/flan-t5-base")),
             fallback_model_name=str(generation.get("fallback_model_name", "google/flan-t5-small")),
             max_new_tokens=int(generation.get("max_new_tokens", 96)),
@@ -218,7 +230,18 @@ def _nested(config: dict, section: str, key: str, default):
     return config.get(key, default)
 
 
-def _pack(query: str, decision: str, answer: str, hits: list[dict], citations: list[dict], traces: list[dict], triage: dict, start: float, domains: list[dict]) -> dict:
+def _pack(
+    query: str,
+    decision: str,
+    answer: str,
+    hits: list[dict],
+    citations: list[dict],
+    traces: list[dict],
+    triage: dict,
+    start: float,
+    domains: list[dict],
+    generator_info: dict | None = None,
+) -> dict:
     scanned = fraction_scanned([d["domain"] for d in domains]) if domains else 1.0
     return {
         "query": query,
@@ -230,4 +253,5 @@ def _pack(query: str, decision: str, answer: str, hits: list[dict], citations: l
         "triage_margin": triage.get("margin", 0.0),
         "latency_ms": (time.perf_counter() - start) * 1000.0,
         "fraction_kb_scanned": scanned,
+        "generator": generator_info or {},
     }

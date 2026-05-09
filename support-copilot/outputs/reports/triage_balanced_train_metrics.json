@@ -5,17 +5,17 @@
   "backend": "distilbert-sequence-classifier",
   "checkpoint": "outputs\\triage_balanced\\distilbert",
   "train": {
-    "accuracy": 0.9999444444444444,
+    "accuracy": 1.0,
     "ANSWER precision": 1.0,
     "ANSWER recall": 1.0,
     "ANSWER F1": 1.0,
-    "TICKET precision": 0.9998000399920016,
+    "TICKET precision": 1.0,
     "TICKET recall": 1.0,
-    "TICKET F1": 0.9999000099990001,
+    "TICKET F1": 1.0,
     "REJECT precision": 1.0,
-    "REJECT recall": 0.9998,
-    "REJECT F1": 0.9998999899989999,
-    "macro_f1": 0.9999333333326667,
+    "REJECT recall": 1.0,
+    "REJECT F1": 1.0,
+    "macro_f1": 1.0,
     "confusion_matrix": {
       "ANSWER": {
         "ANSWER": 8000,
@@ -29,30 +29,30 @@
       },
       "REJECT": {
         "ANSWER": 0,
-        "TICKET": 1,
-        "REJECT": 4999
+        "TICKET": 0,
+        "REJECT": 5000
       }
     },
-    "TBP@0.15": 0.9999444444444444,
-    "avg_margin": 12.32837889268539
+    "TBP@0.15": 1.0,
+    "avg_margin": 11.981722634871801
   },
   "validation": {
-    "accuracy": 0.9985,
+    "accuracy": 0.999,
     "ANSWER precision": 1.0,
     "ANSWER recall": 0.998,
     "ANSWER F1": 0.998998998998999,
     "TICKET precision": 0.998003992015968,
     "TICKET recall": 1.0,
     "TICKET F1": 0.9990009990009989,
-    "REJECT precision": 0.9960079840319361,
-    "REJECT recall": 0.998,
-    "REJECT F1": 0.997002997002997,
-    "macro_f1": 0.998334331667665,
+    "REJECT precision": 0.998003992015968,
+    "REJECT recall": 1.0,
+    "REJECT F1": 0.9990009990009989,
+    "macro_f1": 0.9990003323336656,
     "confusion_matrix": {
       "ANSWER": {
         "ANSWER": 998,
-        "TICKET": 0,
-        "REJECT": 2
+        "TICKET": 1,
+        "REJECT": 1
       },
       "TICKET": {
         "ANSWER": 0,
@@ -61,21 +61,21 @@
       },
       "REJECT": {
         "ANSWER": 0,
-        "TICKET": 1,
-        "REJECT": 499
+        "TICKET": 0,
+        "REJECT": 500
       }
     },
-    "TBP@0.15": 0.9985,
-    "avg_margin": 12.115072067171335
+    "TBP@0.15": 0.999,
+    "avg_margin": 11.599090072363616
   },
-  "accuracy": 0.9999444444444444,
-  "TBP@0.15": 0.9999444444444444,
-  "avg_margin": 12.32837889268539,
-  "last_train_loss": 4.943703970639035e-05,
+  "accuracy": 1.0,
+  "TBP@0.15": 1.0,
+  "avg_margin": 11.981722634871801,
+  "last_train_loss": 0.00013788705109618604,
   "history": [
     {
       "epoch": 1,
-      "train_loss": 0.1248085926183396,
+      "train_loss": 0.13171204078630236,
       "accuracy": 0.9995,
       "ANSWER precision": 0.999000999000999,
       "ANSWER recall": 1.0,
@@ -105,27 +105,61 @@
         }
       },
       "TBP@0.15": 0.9995,
-      "avg_margin": 10.726651920415462
+      "avg_margin": 10.463663291290402
     },
     {
       "epoch": 2,
-      "train_loss": 0.005772218466163192,
+      "train_loss": 0.002238867618681575,
+      "accuracy": 1.0,
+      "ANSWER precision": 1.0,
+      "ANSWER recall": 1.0,
+      "ANSWER F1": 1.0,
+      "TICKET precision": 1.0,
+      "TICKET recall": 1.0,
+      "TICKET F1": 1.0,
+      "REJECT precision": 1.0,
+      "REJECT recall": 1.0,
+      "REJECT F1": 1.0,
+      "macro_f1": 1.0,
+      "confusion_matrix": {
+        "ANSWER": {
+          "ANSWER": 1000,
+          "TICKET": 0,
+          "REJECT": 0
+        },
+        "TICKET": {
+          "ANSWER": 0,
+          "TICKET": 500,
+          "REJECT": 0
+        },
+        "REJECT": {
+          "ANSWER": 0,
+          "TICKET": 0,
+          "REJECT": 500
+        }
+      },
+      "TBP@0.15": 1.0,
+      "avg_margin": 11.510269433745183
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.0036314845460078183,
       "accuracy": 0.999,
       "ANSWER precision": 1.0,
       "ANSWER recall": 0.998,
       "ANSWER F1": 0.998998998998999,
-      "TICKET precision": 1.0,
+      "TICKET precision": 0.998003992015968,
       "TICKET recall": 1.0,
-      "TICKET F1": 1.0,
-      "REJECT precision": 0.9960159362549801,
+      "TICKET F1": 0.9990009990009989,
+      "REJECT precision": 0.998003992015968,
       "REJECT recall": 1.0,
-      "REJECT F1": 0.998003992015968,
-      "macro_f1": 0.999000997004989,
+      "REJECT F1": 0.9990009990009989,
+      "macro_f1": 0.9990003323336656,
       "confusion_matrix": {
         "ANSWER": {
           "ANSWER": 998,
-          "TICKET": 0,
-          "REJECT": 2
+          "TICKET": 1,
+          "REJECT": 1
         },
         "TICKET": {
           "ANSWER": 0,
@@ -139,41 +173,7 @@
         }
       },
       "TBP@0.15": 0.999,
-      "avg_margin": 11.114726067687386
-    },
-    {
-      "epoch": 3,
-      "train_loss": 0.0016639800439313857,
-      "accuracy": 0.9985,
-      "ANSWER precision": 1.0,
-      "ANSWER recall": 0.998,
-      "ANSWER F1": 0.998998998998999,
-      "TICKET precision": 0.998003992015968,
-      "TICKET recall": 1.0,
-      "TICKET F1": 0.9990009990009989,
-      "REJECT precision": 0.9960079840319361,
-      "REJECT recall": 0.998,
-      "REJECT F1": 0.997002997002997,
-      "macro_f1": 0.998334331667665,
-      "confusion_matrix": {
-        "ANSWER": {
-          "ANSWER": 998,
-          "TICKET": 0,
-          "REJECT": 2
-        },
-        "TICKET": {
-          "ANSWER": 0,
-          "TICKET": 500,
-          "REJECT": 0
-        },
-        "REJECT": {
-          "ANSWER": 0,
-          "TICKET": 1,
-          "REJECT": 499
-        }
-      },
-      "TBP@0.15": 0.9985,
-      "avg_margin": 12.115072067171335
+      "avg_margin": 11.599090072363616
     }
   ],
   "loss": "cross_entropy + lambda_boundary * softplus(max_wrong - correct + mu)",

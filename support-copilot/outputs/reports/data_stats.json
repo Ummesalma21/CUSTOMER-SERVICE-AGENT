@@ -1,10 +1,13 @@
 {
-  "kb_chunks": 5289,
-  "dialogue_turns": 57222,
+  "kb_chunks": 7806,
+  "dialogue_turns": 27920,
   "retriever_train": 9000,
   "reranker_train": 36000,
   "triage_train": 18000,
-  "preference_pairs": 3000,
-  "eval_set": 3000,
+  "preference_pairs": 1000,
+  "generator_train": 10080,
+  "generator_val": 960,
+  "generator_test": 960,
+  "eval_set": 1000,
   "dataset_source": "IBM/multidoc2dial"
 }

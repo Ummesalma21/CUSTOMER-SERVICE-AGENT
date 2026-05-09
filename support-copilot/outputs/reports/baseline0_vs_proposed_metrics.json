@@ -1,0 +1,192 @@
+{
+  "configs": {
+    "baseline_0": "configs/baseline_pretrained_rag.yaml",
+    "proposed": "configs/final_eval_generator_fixed.yaml"
+  },
+  "answer_only": {
+    "baseline_0": {
+      "Recall@1": 0.104,
+      "Recall@5": 0.182,
+      "MRR@10": 0.12913333333333335,
+      "EvidenceHit@5": 0.182,
+      "CitationPrecision": 1.0,
+      "GroundedAnswerRate": 1.0,
+      "UnsupportedClaimRate": 0.0,
+      "ESA": 0.476,
+      "AQS": 0.6270000000000007
+    },
+    "proposed": {
+      "Recall@1": 0.156,
+      "Recall@5": 0.362,
+      "MRR@10": 0.23196666666666663,
+      "EvidenceHit@5": 0.362,
+      "CitationPrecision": 1.0,
+      "GroundedAnswerRate": 1.0,
+      "UnsupportedClaimRate": 0.0,
+      "ESA": 0.53,
+      "AQS": 0.6733333333333333
+    }
+  },
+  "mixed_workflow": {
+    "baseline_0": {
+      "Tool Decision Accuracy": 0.6,
+      "ANSWER F1": 0.7499999999999999,
+      "ANSWER Precision": 0.6,
+      "ANSWER Recall": 1.0,
+      "TICKET F1": 0.0,
+      "TICKET Precision": 0.0,
+      "TICKET Recall": 0.0,
+      "REJECT F1": 0.0,
+      "REJECT Precision": 0.0,
+      "REJECT Recall": 0.0,
+      "confusion_matrix": {
+        "ANSWER": {
+          "ANSWER": 600,
+          "TICKET": 0,
+          "REJECT": 0
+        },
+        "TICKET": {
+          "ANSWER": 200,
+          "TICKET": 0,
+          "REJECT": 0
+        },
+        "REJECT": {
+          "ANSWER": 200,
+          "TICKET": 0,
+          "REJECT": 0
+        }
+      },
+      "Macro-F1": 0.24999999999999997,
+      "OODAnswerRate": 1.0,
+      "TicketMissRate": 1.0,
+      "FalseRejectRate": 0.0,
+      "FalseAcceptRate": 1.0,
+      "SupportedResponseRate": 0.575,
+      "UnsupportedAnswerRate": 0.425,
+      "EvidenceUseAccuracy": 0.6
+    },
+    "proposed": {
+      "Tool Decision Accuracy": 0.676,
+      "ANSWER F1": 0.7755406413124534,
+      "ANSWER Precision": 0.7017543859649122,
+      "ANSWER Recall": 0.8666666666666667,
+      "TICKET F1": 0.4540816326530613,
+      "TICKET Precision": 0.4635416666666667,
+      "TICKET Recall": 0.445,
+      "REJECT F1": 0.50187265917603,
+      "REJECT Precision": 1.0,
+      "REJECT Recall": 0.335,
+      "confusion_matrix": {
+        "ANSWER": {
+          "ANSWER": 520,
+          "TICKET": 80,
+          "REJECT": 0
+        },
+        "TICKET": {
+          "ANSWER": 111,
+          "TICKET": 89,
+          "REJECT": 0
+        },
+        "REJECT": {
+          "ANSWER": 110,
+          "TICKET": 23,
+          "REJECT": 67
+        }
+      },
+      "Macro-F1": 0.5771649777138482,
+      "OODAnswerRate": 0.55,
+      "TicketMissRate": 0.555,
+      "FalseRejectRate": 0.0,
+      "FalseAcceptRate": 0.665,
+      "SupportedResponseRate": 0.658,
+      "UnsupportedAnswerRate": 0.319,
+      "EvidenceUseAccuracy": 0.676
+    }
+  },
+  "unsupported_answer_safety": {
+    "unsupported_case_count": 400,
+    "answerable_case_count": 600,
+    "baseline_0": {
+      "UnsupportedAnswerRate": 1.0,
+      "UnsupportedAnswerCount": 400,
+      "SafeActionRate": 0.0,
+      "OODAnswerRate": 1.0,
+      "TicketMissRate": 1.0,
+      "FalseRejectOnAnswerableRate": 0.0
+    },
+    "proposed": {
+      "UnsupportedAnswerRate": 0.5525,
+      "UnsupportedAnswerCount": 221,
+      "UnsupportedAnswerPreventionCount": 179,
+      "UnsupportedAnswerPreventionRate": 0.4475,
+      "SafeActionRate": 0.4475,
+      "OODAnswerRate": 0.55,
+      "TicketMissRate": 0.555,
+      "FalseRejectOnAnswerableRate": 0.0
+    }
+  },
+  "latency": {
+    "measurement_note": "Baseline-0 live per-query latency was not remeasured here because the official baseline predictions were batch-generated in three_way_final_comparison. Proposed latency is loaded from saved per-query mixed-eval traces when available.",
+    "sample_size": 200,
+    "warmup_excluded": 5,
+    "baseline_0": {
+      "avg_latency_ms": null,
+      "p50_latency_ms": null,
+      "p95_latency_ms": null,
+      "throughput_qps": null,
+      "total_eval_time_sec": null
+    },
+    "proposed": {
+      "avg_latency_ms": 42.295203995890915,
+      "p50_latency_ms": 43.23674994520843,
+      "p95_latency_ms": 56.893999921157956,
+      "throughput_qps": 23.643342637551825,
+      "total_eval_time_sec": 8.459040799178183
+    }
+  },
+  "efficiency": {
+    "total_kb_chunks": 7806,
+    "baseline_0": {
+      "avg_fraction_kb_searched": 1.0,
+      "median_fraction_kb_searched": 1.0,
+      "p95_fraction_kb_searched": 1.0,
+      "global_fallback_rate": 1.0,
+      "avg_num_domains_searched": 0.0,
+      "avg_num_tool_calls": 1.0,
+      "REE@5": 0.182
+    },
+    "proposed": {
+      "avg_fraction_kb_searched": 0.9171851140148608,
+      "median_fraction_kb_searched": 1.0,
+      "p95_fraction_kb_searched": 1.0,
+      "global_fallback_rate": 0.872,
+      "avg_num_domains_searched": 2.799,
+      "avg_num_tool_calls": 5.773,
+      "REE@5": 0.3946858649017876,
+      "approximation_note": "Fraction searched is approximated from SearchKB tool trace domains and domain chunk counts; global fallback counts as full KB search."
+    }
+  },
+  "tool_usage": {
+    "baseline_0": {
+      "RouteDomain call rate": 0.0,
+      "SearchKB call rate": 1.0,
+      "GetPolicy call rate": 0.0,
+      "CreateTicket call rate": 0.0,
+      "RejectQuery call rate": 0.0,
+      "average tool calls per query": 1.0
+    },
+    "proposed": {
+      "RouteDomain call rate": 1.0,
+      "SearchKB call rate": 0.933,
+      "GetPolicy call rate": 0.843,
+      "CreateTicket call rate": 0.192,
+      "RejectQuery call rate": 0.067,
+      "average tool calls per query": 5.773
+    },
+    "convention": "SearchKB is counted as a retrieval operation for both systems; RouteDomain, GetPolicy, CreateTicket, and RejectQuery are tool-policy calls."
+  },
+  "notes": {
+    "baseline_0": "Pretrained RAG; full KB search; no routing, reranker, triage, ticket, reject, or preference ranker; always ANSWER.",
+    "proposed": "Final support copilot with trained/fine-tuned components, routing, triage/tool-policy, ticket/reject tools, and grounded answer validation/generation."
+  }
+}

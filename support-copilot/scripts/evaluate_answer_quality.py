@@ -53,10 +53,15 @@ def main() -> None:
         baseline_scores.append(baseline)
         proposed_scores.append(proposed)
         scored.append({**row, "reference_available": reference is not None, "baseline_quality": baseline, "proposed_quality": proposed})
+    reference_count = sum(1 for row in scored if row["reference_available"])
     metrics = {
         "count": len(rows),
-        "reference_available": sum(1 for row in scored if row["reference_available"]),
-        "reference_note": "No gold/reference answer text was present in final_answer_only_predictions.jsonl; token F1 and ROUGE-L are not computed.",
+        "reference_available": reference_count,
+        "reference_note": (
+            "Gold/reference answer text was available and used for token F1 and ROUGE-L."
+            if reference_count
+            else "No gold/reference answer text was present in final_answer_only_predictions.jsonl; token F1 and ROUGE-L are not computed."
+        ),
         "baseline": _aggregate(baseline_scores),
         "proposed": _aggregate(proposed_scores),
     }

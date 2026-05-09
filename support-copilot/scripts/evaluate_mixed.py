@@ -85,10 +85,13 @@ def _default_prefix(config_path: str) -> str:
 def build_mixed_eval(seed: int = 42) -> list[dict]:
     rng = random.Random(seed)
     eval_rows = read_jsonl(project_path("data", "processed", "eval_set.jsonl"))
+    fallback_answer_rows = read_jsonl(project_path("data", "processed", "dialogue_turns.jsonl"))
     answer_rows = []
     seen_queries = set()
-    for row in eval_rows:
+    for row in list(eval_rows) + list(fallback_answer_rows):
         if not row.get("gold_chunk_id") or not row.get("query") or row["query"] in seen_queries:
+            continue
+        if not _usable_answer_query(row["query"]):
             continue
         seen_queries.add(row["query"])
         answer_rows.append(
@@ -112,6 +115,33 @@ def build_mixed_eval(seed: int = 42) -> list[dict]:
     rows = answer_rows + ticket_rows + reject_rows
     rng.shuffle(rows)
     return rows
+
+
+def _usable_answer_query(query: str) -> bool:
+    q = (query or "").strip().lower()
+    words = [w for w in q.replace("/", " ").split() if w.strip(".,?!;:")]
+    if len(words) < 5:
+        return False
+    bad_starts = ("yes,", "no,", "not,", "sorry", "no sorry", "yes.", "no.")
+    if q.startswith(bad_starts):
+        return False
+    vague = {
+        "what are the different ones",
+        "what is the on-site investigation about",
+        "i need more information",
+        "i find myself needing more information",
+        "tell me more",
+    }
+    if any(item in q for item in vague):
+        return False
+    support_terms = {
+        "benefit", "benefits", "ssi", "social security", "dmv", "license", "registration", "vehicle",
+        "veteran", "va", "claim", "student", "loan", "fafsa", "renew", "renewal", "card", "document",
+        "appeal", "application", "eligible", "payment", "address", "online",
+    }
+    has_support_term = any(term in q for term in support_terms)
+    has_question_shape = "?" in q or q.startswith(("how ", "what ", "when ", "where ", "can ", "do ", "does ", "is ", "are ", "will ", "should ", "why "))
+    return has_support_term and has_question_shape
 
 
 def _synthetic_ticket_rows(n: int) -> list[dict]:

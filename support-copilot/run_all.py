@@ -10,6 +10,7 @@ from src.retrieval.build_faiss import build_faiss_index
 from src.retrieval.train_retriever import train_retriever
 from src.triage.train_triage import train_triage
 from src.preference.train_preference_ranker import train_preference_ranker
+from src.generation.train_generator_lora import train_generator_lora
 from src.utils.io import load_config, project_path, read_json, read_jsonl, write_json, write_jsonl
 from src.utils.logging import get_logger
 
@@ -33,6 +34,9 @@ def main() -> None:
     train_triage(config)
     LOG.info("Training preference ranker")
     train_preference_ranker(config)
+    if int(config.get("generator_epochs", 0) or 0) > 0 or isinstance(config.get("generator_training"), dict):
+        LOG.info("Training grounded generator")
+        train_generator_lora(config)
     LOG.info("Evaluating")
     evaluate_all(config)
 

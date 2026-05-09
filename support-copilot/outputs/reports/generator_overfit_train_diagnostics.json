@@ -1,0 +1,40 @@
+{
+  "label_diagnostics": {
+    "examples": 96,
+    "all_ignored": 0,
+    "all_ignored_rate": 0.0,
+    "min_non_ignored_tokens": 11,
+    "avg_non_ignored_tokens": 29.510416666666668,
+    "max_non_ignored_tokens": 93
+  },
+  "zero_loss_steps": 0,
+  "optimizer_steps": 120,
+  "failure": null,
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 3.6102125545342765,
+      "eval_loss": 3.133634795745214
+    },
+    {
+      "epoch": 2,
+      "train_loss": 3.3687646289666495,
+      "eval_loss": 2.940931295355161
+    },
+    {
+      "epoch": 3,
+      "train_loss": 3.192122057080269,
+      "eval_loss": 2.7854324529568353
+    },
+    {
+      "epoch": 4,
+      "train_loss": 3.0987905909617743,
+      "eval_loss": 2.6429554224014282
+    },
+    {
+      "epoch": 5,
+      "train_loss": 2.9445869674285254,
+      "eval_loss": 2.5046396305163703
+    }
+  ]
+}

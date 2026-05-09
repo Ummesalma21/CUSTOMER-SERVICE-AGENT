@@ -1,9 +1,9 @@
 {
   "seed": 42,
   "eval_mixed_exclusion_file": "data\\processed\\eval_mixed_1000.jsonl",
-  "eval_mixed_exclusion_query_count": 896,
-  "excluded_overlapping_answer_source_rows": 5878,
-  "answer_pool_found_after_eval_exclusion": 48988,
+  "eval_mixed_exclusion_query_count": 897,
+  "excluded_overlapping_answer_source_rows": 4384,
+  "answer_pool_found_after_eval_exclusion": 28826,
   "train_exact_overlap_with_eval_mixed": 0,
   "targets": {
     "train": {
@@ -27,31 +27,31 @@
       "path": "data\\processed\\triage_train_balanced.jsonl",
       "count": 18000,
       "labels": {
-        "TICKET": 5000,
+        "REJECT": 5000,
         "ANSWER": 8000,
-        "REJECT": 5000
+        "TICKET": 5000
       },
       "source_types": {
-        "synthetic_ticket_account_specific": 5000,
+        "synthetic_reject_easy": 1000,
         "multidoc2dial_answer": 8000,
-        "synthetic_reject_hard_support_like": 2500,
+        "synthetic_ticket_account_specific": 5000,
         "synthetic_reject_near_boundary": 1500,
-        "synthetic_reject_easy": 1000
+        "synthetic_reject_hard_support_like": 2500
       }
     },
     "val": {
       "path": "data\\processed\\triage_val_balanced.jsonl",
       "count": 2000,
       "labels": {
-        "TICKET": 500,
+        "ANSWER": 1000,
         "REJECT": 500,
-        "ANSWER": 1000
+        "TICKET": 500
       },
       "source_types": {
+        "multidoc2dial_answer": 1000,
+        "synthetic_reject_hard_support_like": 250,
         "synthetic_ticket_account_specific": 500,
         "synthetic_reject_easy": 100,
-        "synthetic_reject_hard_support_like": 250,
-        "multidoc2dial_answer": 1000,
         "synthetic_reject_near_boundary": 150
       }
     },
@@ -59,16 +59,16 @@
       "path": "data\\processed\\triage_test_balanced.jsonl",
       "count": 2000,
       "labels": {
-        "REJECT": 500,
         "ANSWER": 1000,
-        "TICKET": 500
+        "TICKET": 500,
+        "REJECT": 500
       },
       "source_types": {
-        "synthetic_reject_near_boundary": 150,
-        "synthetic_reject_hard_support_like": 250,
         "multidoc2dial_answer": 1000,
+        "synthetic_ticket_account_specific": 500,
         "synthetic_reject_easy": 100,
-        "synthetic_ticket_account_specific": 500
+        "synthetic_reject_hard_support_like": 250,
+        "synthetic_reject_near_boundary": 150
       }
     }
   },

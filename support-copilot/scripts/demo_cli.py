@@ -26,6 +26,12 @@ def main() -> None:
     if result.get("decision") == "TICKET":
         display_answer = display_answer.split("Ticket ID:")[0].strip()
     print(display_answer)
+    generator = result.get("generator") or {}
+    if generator:
+        model_name = str(generator.get("model_name") or "")
+        label = "extractive fallback" if "extractive" in model_name or generator.get("fallback_reason") else "flan-t5-fixed"
+        print("\nGenerator:")
+        print(f"{label} ({model_name or 'not used'})")
     if result.get("decision") == "ANSWER":
         print("\nCitations:")
         citations = result.get("citations") or []

@@ -1,0 +1,30 @@
+{
+  "test_file": "data\\processed\\generator_val.jsonl",
+  "count": 960,
+  "extractive_fallback": {
+    "AnswerTokenF1": 0.09908536941068943,
+    "ROUGE-L": 0.07496800683515259,
+    "NoFragmentRate": 0.5145833333333333,
+    "FragmentRate": 0.48541666666666666,
+    "QuestionAsAnswerRate": 0.05416666666666667,
+    "QueryCopyRate": 0.0,
+    "EmptyOrInvalidAnswerRate": 0.48541666666666666,
+    "AverageAnswerLengthWords": 16.266666666666666,
+    "EvidenceSupportedHeuristicRate": 0.50625,
+    "INSUFFICIENT_EVIDENCE_rate": 0.48541666666666666,
+    "CitationAttachedRate": 1.0
+  },
+  "fixed_generator": {
+    "AnswerTokenF1": 0.1581073974654941,
+    "ROUGE-L": 0.12706365842003037,
+    "NoFragmentRate": 0.7291666666666666,
+    "FragmentRate": 0.2708333333333333,
+    "QuestionAsAnswerRate": 0.013541666666666667,
+    "QueryCopyRate": 0.005208333333333333,
+    "EmptyOrInvalidAnswerRate": 0.2708333333333333,
+    "AverageAnswerLengthWords": 21.680208333333333,
+    "EvidenceSupportedHeuristicRate": 0.6260416666666667,
+    "INSUFFICIENT_EVIDENCE_rate": 0.2708333333333333,
+    "CitationAttachedRate": 1.0
+  }
+}

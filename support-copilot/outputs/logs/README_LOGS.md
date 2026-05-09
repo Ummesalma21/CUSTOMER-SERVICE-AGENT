@@ -1,3 +1,3 @@
 # Logs
 
-Training and evaluation logs are written here during local runs. Large `*.log` files are ignored by git; final metric summaries are kept in `outputs/reports/`.
+Fresh run logs are written here during local training and evaluation. Large `*.log` files are ignored by git; final summaries and metrics are in `outputs/reports/`.

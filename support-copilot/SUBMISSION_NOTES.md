@@ -25,6 +25,7 @@ Large local artifacts are ignored by git and should only be included in the ZIP 
 - `outputs/reranker/`
 - `outputs/triage_balanced/`
 - `outputs/preference/`
+- `outputs/generator/`
 - `data/indexes/`
 - large prediction JSONL files under `outputs/reports/`
 
@@ -39,6 +40,7 @@ The code remains runnable for training and evaluation, but inference with the fi
 .\.venv\Scripts\python.exe scripts\train_reranker.py --config configs\full.yaml
 .\.venv\Scripts\python.exe scripts\build_balanced_triage_data.py
 .\.venv\Scripts\python.exe scripts\train_triage.py --config configs\triage_balanced.yaml
+.\.venv\Scripts\python.exe scripts\train_generator.py --config configs\generator_finetune.yaml
 ```
 
 ## Final Demo Commands

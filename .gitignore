@@ -16,6 +16,8 @@ support-copilot/outputs/reranker/
 support-copilot/outputs/triage/
 support-copilot/outputs/triage_balanced/
 support-copilot/outputs/preference/
+support-copilot/outputs/generator/
+support-copilot/outputs/archive_runs/
 
 # Index/model binaries
 *.faiss

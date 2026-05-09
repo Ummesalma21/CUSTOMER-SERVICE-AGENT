@@ -10,14 +10,14 @@ Eval file: `data/processed/eval_mixed_1000.jsonl`
 `{'Tool Decision Accuracy': 0.6, 'ANSWER F1': 0.7499999999999999, 'ANSWER Precision': 0.6, 'ANSWER Recall': 1.0, 'TICKET F1': 0.0, 'TICKET Precision': 0.0, 'TICKET Recall': 0.0, 'REJECT F1': 0.0, 'REJECT Precision': 0.0, 'REJECT Recall': 0.0, 'confusion_matrix': {'ANSWER': {'ANSWER': 600, 'TICKET': 0, 'REJECT': 0}, 'TICKET': {'ANSWER': 200, 'TICKET': 0, 'REJECT': 0}, 'REJECT': {'ANSWER': 200, 'TICKET': 0, 'REJECT': 0}}, 'Macro-F1': 0.24999999999999997, 'FalseRejectRate': 0.0, 'FalseAcceptRate': 1.0, 'OODAnswerRate': 1.0, 'TicketMissRate': 1.0}`
 
 ## Proposed Calibrated System
-`{'Tool Decision Accuracy': 0.765, 'ANSWER F1': 0.8346235045742435, 'ANSWER Precision': 0.7222898903775883, 'ANSWER Recall': 0.9883333333333333, 'TICKET F1': 0.6137931034482759, 'TICKET Precision': 0.9888888888888889, 'TICKET Recall': 0.445, 'REJECT F1': 0.57439446366782, 'REJECT Precision': 0.9325842696629213, 'REJECT Recall': 0.415, 'confusion_matrix': {'ANSWER': {'ANSWER': 593, 'TICKET': 1, 'REJECT': 6}, 'TICKET': {'ANSWER': 111, 'TICKET': 89, 'REJECT': 0}, 'REJECT': {'ANSWER': 117, 'TICKET': 0, 'REJECT': 83}}, 'Macro-F1': 0.6742703572301131, 'FalseRejectRate': 0.0075, 'FalseAcceptRate': 0.585, 'OODAnswerRate': 0.585, 'TicketMissRate': 0.555}`
+`{'Tool Decision Accuracy': 0.676, 'ANSWER F1': 0.7755406413124534, 'ANSWER Precision': 0.7017543859649122, 'ANSWER Recall': 0.8666666666666667, 'TICKET F1': 0.4540816326530613, 'TICKET Precision': 0.4635416666666667, 'TICKET Recall': 0.445, 'REJECT F1': 0.50187265917603, 'REJECT Precision': 1.0, 'REJECT Recall': 0.335, 'confusion_matrix': {'ANSWER': {'ANSWER': 520, 'TICKET': 80, 'REJECT': 0}, 'TICKET': {'ANSWER': 111, 'TICKET': 89, 'REJECT': 0}, 'REJECT': {'ANSWER': 110, 'TICKET': 23, 'REJECT': 67}}, 'Macro-F1': 0.5771649777138482, 'FalseRejectRate': 0.0, 'FalseAcceptRate': 0.665, 'OODAnswerRate': 0.55, 'TicketMissRate': 0.555}`
 
 ## ANSWER-Only Retrieval
-Baseline: `{'Recall@5': 0.415, 'MRR@10': 0.3116666666666667, 'EvidenceHit@5': 0.415, 'CitationPrecision': 1.0}`
-Proposed: `{'Recall@5': 0.415, 'MRR@10': 0.30869444444444455, 'EvidenceHit@5': 0.415, 'CitationPrecision': 1.0}`
+Baseline: `{'Recall@5': 0.37833333333333335, 'MRR@10': 0.24869444444444436, 'EvidenceHit@5': 0.37833333333333335, 'CitationPrecision': 1.0}`
+Proposed: `{'Recall@5': 0.37333333333333335, 'MRR@10': 0.2521388888888888, 'EvidenceHit@5': 0.37333333333333335, 'CitationPrecision': 1.0}`
 
 ## Latency
-`{'avg_ms': 99.27589560323395, 'p95_ms': 145.2025999315083, 'qps': 10.072938591222588}`
+`{'avg_ms': 49.87855939869769, 'p95_ms': 62.8000998403877, 'qps': 20.048694510333224}`
 
 ## Notes
 Baseline RAG is answer-only, so TICKET and REJECT examples are counted as decision errors.
