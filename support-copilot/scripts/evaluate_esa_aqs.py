@@ -17,6 +17,7 @@ from src.utils.io import project_path, read_jsonl, write_json, write_jsonl
 
 
 PREDICTION_CANDIDATES = [
+    "outputs/reports/final_answer_only_supported_synthesis_predictions.jsonl",
     "outputs/reports/final_answer_only_generator_fixed_predictions.jsonl",
     "outputs/reports/final_answer_only_generator_clean_predictions.jsonl",
     "outputs/reports/final_answer_only_predictions.jsonl",

@@ -6,6 +6,7 @@ import re
 
 from src.generation.answer_quality import clean_answer_text, is_fragment_answer
 from src.generation.extractive_synthesizer import synthesize_extractive_answer
+from src.retrieval.search_kb import tokenize
 
 
 def generate_grounded_answer(
@@ -48,6 +49,10 @@ def generate_grounded_answer(
                 fallback = synthesize_extractive_answer(query, evidence_passages)
                 fallback["fallback_reason"] = "invalid_generation"
                 return fallback
+            extractive = synthesize_extractive_answer(query, evidence_passages)
+            if _should_prefer_extractive(query, answer, extractive, evidence_passages):
+                extractive["fallback_reason"] = "extractive_more_evidence_supported"
+                return extractive
             return {
                 "status": "ok",
                 "answer": answer,
@@ -129,8 +134,41 @@ def _invalid_generation(answer: str, query: str, evidence_passages: list[dict]) 
     return False
 
 
+def _should_prefer_extractive(query: str, generated_answer: str, extractive: dict, evidence_passages: list[dict]) -> bool:
+    if extractive.get("status") != "ok" or not extractive.get("answer"):
+        return False
+    generated = clean_answer_text(generated_answer)
+    extracted = clean_answer_text(str(extractive.get("answer", "")))
+    evidence = " ".join(str(p.get("text", "")) for p in evidence_passages[:2])
+    generated_support = _support_score(query, generated, evidence)
+    extractive_support = _support_score(query, extracted, evidence)
+    if _invalid_generation(generated, query, evidence_passages):
+        return True
+    if extractive_support >= generated_support + 0.08:
+        return True
+    if generated_support < 0.42 and extractive_support >= 0.42:
+        return True
+    return False
+
+
+def _support_score(query: str, answer: str, evidence: str) -> float:
+    q_tokens = _content_tokens(query)
+    a_tokens = _content_tokens(answer)
+    e_tokens = _content_tokens(evidence)
+    if not a_tokens or not e_tokens:
+        return 0.0
+    answer_evidence = len(a_tokens & e_tokens) / max(1, len(a_tokens))
+    query_answer = len(q_tokens & a_tokens) / max(1, len(q_tokens)) if q_tokens else 0.0
+    query_evidence = len(q_tokens & e_tokens) / max(1, len(q_tokens)) if q_tokens else 0.0
+    return 0.55 * answer_evidence + 0.30 * query_answer + 0.15 * query_evidence
+
+
 def _tokens(text: str) -> list[str]:
     return re.findall(r"\b[a-zA-Z]{3,}\b", (text or "").lower())
+
+
+def _content_tokens(text: str) -> set[str]:
+    return {tok for tok in tokenize(text) if len(tok) >= 3 and tok not in _QUERY_STOPWORDS}
 
 
 _QUERY_STOPWORDS = {

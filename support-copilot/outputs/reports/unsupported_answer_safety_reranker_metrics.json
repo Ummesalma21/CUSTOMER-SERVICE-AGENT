@@ -1,0 +1,22 @@
+{
+  "unsupported_case_count": 400,
+  "answerable_case_count": 600,
+  "baseline_0": {
+    "UnsupportedAnswerRate": 1.0,
+    "UnsupportedAnswerCount": 400,
+    "SafeActionRate": 0.0,
+    "OODAnswerRate": 1.0,
+    "TicketMissRate": 1.0,
+    "FalseRejectOnAnswerableRate": 0.0
+  },
+  "proposed": {
+    "UnsupportedAnswerRate": 0.5025,
+    "UnsupportedAnswerCount": 201,
+    "UnsupportedAnswerPreventionCount": 199,
+    "UnsupportedAnswerPreventionRate": 0.4975,
+    "SafeActionRate": 0.4975,
+    "OODAnswerRate": 0.51,
+    "TicketMissRate": 0.495,
+    "FalseRejectOnAnswerableRate": 0.01
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "baseline_0": {
+    "avg_latency_ms": null,
+    "p95_latency_ms": null,
+    "throughput_qps": null
+  },
+  "proposed_reranker": {
+    "avg_latency_ms": 90.51031749995673,
+    "p50_latency_ms": 46.70349999832979,
+    "p95_latency_ms": 269.52929999970365,
+    "throughput_qps": 11.048464170954633,
+    "sample_size": 200,
+    "warmup_excluded": 5
+  }
+}

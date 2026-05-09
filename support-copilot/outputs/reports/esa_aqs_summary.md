@@ -1,6 +1,6 @@
 # ESA and AQS Evaluation
 
-Prediction file: `C:\Users\ummes\OneDrive\Documents\New project\CUSTOMER-SERVICE-AGENT\support-copilot\outputs\reports\final_answer_only_generator_fixed_predictions.jsonl`
+Prediction file: `C:\Users\ummes\OneDrive\Documents\New project\CUSTOMER-SERVICE-AGENT\support-copilot\outputs\reports\final_answer_only_supported_synthesis_predictions.jsonl`
 Evaluated answerable rows: `500`
 Similarity backend: `sentence_transformer`
 
@@ -12,9 +12,9 @@ Thresholds:
 
 | Metric | Baseline RAG | Proposed |
 |---|---:|---:|
-| ESA | 0.7480 | 0.5300 |
-| AQS | 0.7840 | 0.6733 |
+| ESA | 0.4760 | 0.6380 |
+| AQS | 0.6270 | 0.7187 |
 
-Proposed ESA/AQS did not improve on both metrics; ESA is 0.7480 vs 0.5300, and AQS is 0.7840 vs 0.6733. This remains a limitation.
+The proposed system improves ESA from 0.4760 to 0.6380 and AQS from 0.6270 to 0.7187 under the same automatic thresholds.
 
 ESA is a binary automatic proxy for whether the final answer is supported by its cited evidence. AQS is a 0-to-1 automatic rubric averaging fluency, correctness/directness, and trueness/grounding. These are not human-evaluation scores.

@@ -1,6 +1,6 @@
 {
   "config": "configs\\final_eval_generator_fixed.yaml",
-  "eval_path": "data\\processed\\eval_set.jsonl",
+  "eval_path": "data/processed/eval_set.jsonl",
   "count": 500,
   "baseline": {
     "Recall@1": 0.16,
@@ -13,10 +13,10 @@
     "UnsupportedClaimRate": 0.0
   },
   "proposed": {
-    "Recall@1": 0.156,
-    "Recall@5": 0.362,
-    "MRR@10": 0.23196666666666663,
-    "EvidenceHit@5": 0.362,
+    "Recall@1": 0.148,
+    "Recall@5": 0.35,
+    "MRR@10": 0.2229,
+    "EvidenceHit@5": 0.35,
     "CitationPrecision": 1.0,
     "CitationRecall": 1.0,
     "GroundedAnswerRate": 1.0,

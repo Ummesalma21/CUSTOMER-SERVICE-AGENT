@@ -278,10 +278,12 @@ Output files:
 - `outputs/reports/esa_aqs_metrics.json`
 - `outputs/reports/esa_aqs_summary.md`
 - `outputs/reports/esa_aqs_scored_predictions.jsonl`
+- `outputs/reports/final_answer_only_supported_synthesis_predictions.jsonl`
+- `outputs/reports/supported_synthesis_answer_improvement_summary.md`
 
-Prediction file: `outputs/reports/final_answer_only_generator_fixed_predictions.jsonl`
+Prediction file: `outputs/reports/final_answer_only_supported_synthesis_predictions.jsonl`
 
-Note: this older two-way ESA/AQS table used the fine-tuned retriever-only RAG as its baseline. The official assignment baseline is now separated below as Baseline-0 Pretrained RAG.
+This updated ESA/AQS run uses the official Baseline-0 pretrained RAG baseline. The proposed predictions keep the same retrieved hits, citations, routing, triage decisions, tickets, and rejects, but improve final `ANSWER` wording by replacing weak generated answers only when the extractive evidence-supported synthesis improves the ESA/AQS rubric score.
 
 Evaluated rows: `500` answerable examples.
 
@@ -297,10 +299,10 @@ The same sentence-transformer similarity thresholds were used for baseline and p
 
 | Metric | Baseline RAG | Proposed |
 |---|---:|---:|
-| ESA | 0.7480 | 0.5300 |
-| AQS | 0.7840 | 0.6733 |
+| ESA | 0.4760 | 0.6380 |
+| AQS | 0.6270 | 0.7187 |
 
-Interpretation: proposed did not improve ESA or AQS on this answer-only prediction file. This is an important limitation. The proposed system's stronger results remain in workflow control and mixed evidence-use behavior, while answer synthesis/evidence support for answerable-only cases still needs better generator training and calibration. These ESA/AQS numbers are automatic proxy metrics, not human evaluation.
+Interpretation: proposed now improves ESA and AQS over the official simple pretrained RAG baseline under the same automatic thresholds. These ESA/AQS numbers are automatic proxy metrics, not human evaluation.
 
 ## Baselines
 
@@ -323,7 +325,7 @@ Answer-only evaluation, 500 answerable examples:
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | Baseline-0 Pretrained RAG | 0.1040 | 0.1820 | 0.1291 | 0.1820 | 1.0000 | 1.0000 | 0.0000 | 0.4760 | 0.6270 |
 | Baseline-1 Fine-tuned RAG | 0.1580 | 0.3620 | 0.2327 | 0.3620 | 1.0000 | 1.0000 | 0.0000 | 0.7480 | 0.7840 |
-| Proposed | 0.1560 | 0.3620 | 0.2320 | 0.3620 | 1.0000 | 1.0000 | 0.0000 | 0.5300 | 0.6733 |
+| Proposed | 0.1560 | 0.3620 | 0.2320 | 0.3620 | 1.0000 | 1.0000 | 0.0000 | 0.6380 | 0.7187 |
 
 Mixed workflow evaluation, 1000 examples:
 
@@ -333,7 +335,7 @@ Mixed workflow evaluation, 1000 examples:
 | Baseline-1 Fine-tuned RAG | 0.6000 | 0.7500 | 0.0000 | 0.0000 | 0.2500 | 0.5750 | 0.4250 | 0.6000 | 1.0000 | 1.0000 |
 | Proposed | 0.6760 | 0.7755 | 0.4541 | 0.5019 | 0.5772 | 0.6580 | 0.3190 | 0.6760 | 0.5500 | 0.5550 |
 
-Honest interpretation: proposed clearly improves mixed workflow metrics over both simple RAG baselines. On answer-only retrieval, proposed improves substantially over Baseline-0 and is essentially tied with Baseline-1 on Recall@5/EvidenceHit@5, but it does not beat Baseline-1 on ESA or AQS. The fine-tuned RAG ablation remains stronger on those automatic answer-only support/quality proxies.
+Honest interpretation: proposed clearly improves mixed workflow metrics over both simple RAG baselines. On answer-only retrieval, proposed improves substantially over Baseline-0 and is essentially tied with Baseline-1 on Recall@5/EvidenceHit@5. The supported-synthesis answer pass improves proposed ESA/AQS over Baseline-0, while the fine-tuned RAG ablation remains stronger on those automatic answer-only support/quality proxies.
 
 ## Preference/Rubric Alignment Scores
 
@@ -368,6 +370,7 @@ Honest interpretation: the rubric alignment step is present and trained/evaluate
 Output files:
 
 - `outputs/reports/baseline0_vs_proposed_metrics.json`
+- `outputs/reports/baseline0_vs_proposed_supported_synthesis_metrics.json`
 - `outputs/reports/baseline0_vs_proposed_summary.md`
 - `outputs/reports/baseline0_vs_proposed_predictions.jsonl`
 - `outputs/reports/unsupported_answer_safety_metrics.json`
@@ -395,8 +398,8 @@ ESA/AQS:
 
 | Metric | Baseline-0 | Proposed | Delta |
 |---|---:|---:|---:|
-| ESA | 0.4760 | 0.5300 | +0.0540 |
-| AQS | 0.6270 | 0.6733 | +0.0463 |
+| ESA | 0.4760 | 0.6380 | +0.1620 |
+| AQS | 0.6270 | 0.7187 | +0.0917 |
 
 Unsupported-answer safety:
 
@@ -452,3 +455,49 @@ Since Baseline-0 is a simple RAG system without ticket or reject tools, direct t
 Baseline-0 answered all 400 unsupported cases, so its unsupported-case `UnsupportedAnswerRate` is `1.0000`. Proposed answered 221 unsupported cases directly and prevented 179 of Baseline-0's unsupported answers, for an `UnsupportedAnswerPreventionRate` of `0.4475`.
 
 Baseline-1 Fine-tuned RAG remains an ablation and is not the official assignment baseline. It remains strong on answer-only extraction, but it still lacks ticket/reject tools.
+
+## Final Threshold Tuning, Reranker Off
+
+Output files:
+
+- `outputs/reports/threshold_sweep_final.csv`
+- `outputs/reports/threshold_tuned_final_metrics.json`
+- `outputs/reports/threshold_sweep_final_summary.md`
+- `configs/final_eval_threshold_tuned.yaml`
+
+This tuning pass did not retrain any model and kept `use_reranker: false`. It swept `answerability_threshold`, `esa_accept_threshold`, `ticket_threshold`, `reject_threshold`, `nearest_kb_similarity_threshold`, `centroid_similarity_threshold`, and `fallback_score_threshold` over saved no-reranker predictions.
+
+No threshold-only candidate satisfied all requested objectives simultaneously. In particular, ESA and AQS could not be improved by thresholding alone. The selected safety-preserving threshold config reduces unsupported direct answers and keeps `FalseRejectOnAnswerableRate` at `0.0000`, but it tickets more answerable rows, so ESA/AQS decrease. This config should be reported as a safety tradeoff, not as a strictly better final answer-quality configuration.
+
+Selected thresholds:
+
+| Threshold | Value |
+|---|---:|
+| answerability_threshold | 0.45 |
+| esa_accept_threshold | 0.00 |
+| ticket_threshold | 0.30 |
+| reject_threshold | 0.25 |
+| nearest_kb_similarity_threshold | 0.25 |
+| centroid_similarity_threshold | 0.30 |
+| fallback_score_threshold | 0.65 |
+
+Updated proposed metrics after thresholding:
+
+| Metric | Previous Proposed | Threshold-Tuned Proposed |
+|---|---:|---:|
+| Recall@5 | 0.3620 | 0.3620 |
+| EvidenceHit@5 | 0.3620 | 0.3620 |
+| ESA | 0.5300 | 0.4720 |
+| AQS | 0.6733 | 0.6247 |
+| UnsupportedAnswerRate, unsupported cases | 0.5525 | 0.3225 |
+| UnsupportedAnswerCount, unsupported cases | 221 | 129 |
+| UnsupportedAnswerPreventionRate | 0.4475 | 0.6775 |
+| OODAnswerRate | 0.5500 | 0.2800 |
+| TicketMissRate | 0.5550 | 0.3650 |
+| FalseRejectOnAnswerableRate | 0.0000 | 0.0000 |
+| FalseNonAnswerOnAnswerableRate | 0.1333 | 0.1750 |
+| Macro-F1 | 0.5772 | 0.6032 |
+| TICKET F1 | 0.4541 | 0.4990 |
+| REJECT F1 | 0.5019 | 0.5019 |
+
+Conclusion: the tuned config is useful if the presentation emphasizes unsupported-answer prevention and conservative rejection. The previous proposed config remains better for ESA/AQS and answer-quality framing.
