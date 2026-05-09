@@ -495,7 +495,7 @@ tau_domain: 0.35
 tau_chunk: 0.3
 fp16: false
 """
-    project_path("configs", "final_eval_threshold_tuned.yaml").write_text(text, encoding="utf-8")
+    project_path("configs", "safety_tuned_ablation.yaml").write_text(text, encoding="utf-8")
 
 
 def _write_summary(metrics: dict) -> None:

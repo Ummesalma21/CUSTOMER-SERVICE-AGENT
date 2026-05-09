@@ -12,7 +12,7 @@ from src.utils.io import load_config
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="configs/generator_finetune.yaml")
+    parser.add_argument("--config", default="configs/generator_fixed.yaml")
     args = parser.parse_args()
     print(train_generator_lora(load_config(args.config)))
 

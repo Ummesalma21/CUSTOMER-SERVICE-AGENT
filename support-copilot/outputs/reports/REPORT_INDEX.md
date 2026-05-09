@@ -1,26 +1,33 @@
 # Report Index
 
-## Current Fresh Run
+## Main Final Reports
 
-- `FINAL_RESULTS_FOR_REPORT.md`: fresh rechunked full-run summary.
-- `FRESH_RECHUNKED_RUN_SUMMARY.md`: same fresh-run summary with explicit archive/run details.
-- `final_mixed_best_metrics.json`: current fresh mixed workflow metrics.
-- `final_mixed_best_summary.md`: current fresh mixed workflow summary.
-- `final_mixed_grounding_metrics.json`: current fresh grounding/evidence-use metrics.
-- `final_mixed_grounding_summary.md`: current fresh grounding/evidence-use summary.
-- `final_answer_only_metrics.json`: current fresh answer-only retrieval/grounding metrics.
-- `final_answer_only_summary.md`: current fresh answer-only retrieval/grounding summary.
-- `final_answer_quality_metrics.json`: current fresh answer-quality metrics.
-- `final_answer_quality_summary.md`: current fresh answer-quality summary.
-- `generator_train_metrics.json`: current generator fine-tuning metrics.
-- `triage_balanced_dataset_summary.json`: balanced triage split/leakage summary.
-- `triage_balanced_train_metrics.json`: balanced triage training metrics.
-- `demo_quality_checks.md`: current fresh demo checks.
+- `FINAL_RESULTS_FOR_REPORT.md`: complete final narrative, tables, models, limitations, and submission-ready interpretation.
+- `baseline0_vs_proposed_summary.md`: official Baseline-0 pretrained RAG vs proposed system comparison.
+- `baseline0_vs_proposed_metrics.json`: machine-readable metrics for the official final comparison.
+- `baseline0_vs_proposed_supported_synthesis_metrics.json`: same comparison with the supported-synthesis ESA/AQS update.
+- `supported_synthesis_answer_improvement_summary.md`: confirms supported-synthesis answer rewriting changed answer text only, not decisions or retrieved hits.
+- `esa_aqs_summary.md`: ESA and AQS evidence-support/answer-quality proxy summary.
+- `esa_aqs_metrics.json`: machine-readable ESA/AQS metrics.
+- `unsupported_answer_safety_summary.md`: unsupported-answer safety framing for Baseline-0 vs proposed.
+- `unsupported_answer_safety_metrics.json`: machine-readable unsupported-answer safety metrics.
 
-## Local Archive
+## Ablation Reports
 
-The previous run was moved to `outputs/archive_runs/20260508_225006`. That directory contains old processed data, indexes, reports, logs, and checkpoints. It is ignored by git because it contains large local artifacts.
+- `threshold_sweep_final_summary.md`: threshold-only safety tuning summary.
+- `threshold_tuned_final_metrics.json`: selected safety-tuned ablation metrics.
+- `reranker_ablation_summary.md`: reranker-enabled proposed-system ablation summary.
+- `generator_debug_final_summary.md`: generator debugging and fixed-generator status.
+- `preference_score_comparison.md`: lightweight preference/rubric ranker score comparison.
+- `preference_score_comparison.json`: machine-readable preference/rubric score comparison.
 
-## Notes
+## Demo
 
-Large prediction JSONL files, checkpoints, indexes, and logs are intentionally ignored by git. Use the metric JSON and Markdown summaries above for reporting.
+- `demo_quality_checks.md`: final CLI demo checks and expected behavior.
+
+## Archive Locations
+
+- `archive/old_reports/`: old summaries, duplicate metrics, debug reports, and non-final markdown/json reports.
+- `archive/old_outputs/`: bulky prediction dumps, CSV sweeps, and per-row scored outputs.
+- `archive/old_logs/`: logs from training, debugging, and older evaluations.
+- `archive/old_runs/`: old full run snapshots.

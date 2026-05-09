@@ -235,7 +235,7 @@ def _load_or_run_answer_proposed(answer_rows: list[dict[str, Any]]) -> list[dict
             }
             for row in rows
         ]
-    config = load_config("configs/final_eval_generator_fixed.yaml")
+    config = load_config("configs/proposed_final.yaml")
     return [run_proposed(row["query"], config) for row in answer_rows]
 
 
@@ -258,7 +258,7 @@ def _load_or_run_mixed_proposed(mixed_rows: list[dict[str, Any]]) -> list[dict[s
             }
             for row in rows
         ]
-    config = load_config("configs/final_eval_generator_fixed.yaml")
+    config = load_config("configs/proposed_final.yaml")
     return [run_proposed(row["query"], config) for row in mixed_rows]
 
 

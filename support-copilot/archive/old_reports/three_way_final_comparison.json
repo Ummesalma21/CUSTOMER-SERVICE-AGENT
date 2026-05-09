@@ -1,0 +1,85 @@
+{
+  "answer_eval_path": "data\\processed\\eval_set.jsonl",
+  "mixed_eval_path": "data\\processed\\eval_mixed_1000.jsonl",
+  "answer_rows": 500,
+  "mixed_rows": 1000,
+  "systems": {
+    "Baseline-0": "Pretrained RAG using sentence-transformers/all-MiniLM-L6-v2, full KB search, always ANSWER.",
+    "Baseline-1": "Fine-tuned retriever-only RAG ablation, full KB search, always ANSWER.",
+    "Proposed": "Final support copilot with routing, triage/tool-policy, ticketing, rejection, and answer validation."
+  },
+  "answer_only": {
+    "baseline_0_pretrained_rag": {
+      "Recall@1": 0.104,
+      "Recall@5": 0.182,
+      "MRR@10": 0.12913333333333335,
+      "EvidenceHit@5": 0.182,
+      "CitationPrecision": 1.0,
+      "GroundedAnswerRate": 1.0,
+      "UnsupportedClaimRate": 0.0,
+      "ESA": 0.476,
+      "AQS": 0.6270000000000007
+    },
+    "baseline_1_finetuned_rag": {
+      "Recall@1": 0.158,
+      "Recall@5": 0.362,
+      "MRR@10": 0.23273333333333332,
+      "EvidenceHit@5": 0.362,
+      "CitationPrecision": 1.0,
+      "GroundedAnswerRate": 1.0,
+      "UnsupportedClaimRate": 0.0,
+      "ESA": 0.748,
+      "AQS": 0.7840000000000004
+    },
+    "proposed": {
+      "Recall@1": 0.156,
+      "Recall@5": 0.362,
+      "MRR@10": 0.23196666666666663,
+      "EvidenceHit@5": 0.362,
+      "CitationPrecision": 1.0,
+      "GroundedAnswerRate": 1.0,
+      "UnsupportedClaimRate": 0.0,
+      "ESA": 0.53,
+      "AQS": 0.6733333333333333
+    }
+  },
+  "mixed_workflow": {
+    "baseline_0_pretrained_rag": {
+      "Tool Decision Accuracy": 0.6,
+      "ANSWER F1": 0.7499999999999999,
+      "TICKET F1": 0.0,
+      "REJECT F1": 0.0,
+      "Macro-F1": 0.24999999999999997,
+      "SupportedResponseRate": 0.575,
+      "UnsupportedAnswerRate": 0.425,
+      "EvidenceUseAccuracy": 0.6,
+      "OODAnswerRate": 1.0,
+      "TicketMissRate": 1.0
+    },
+    "baseline_1_finetuned_rag": {
+      "Tool Decision Accuracy": 0.6,
+      "ANSWER F1": 0.7499999999999999,
+      "TICKET F1": 0.0,
+      "REJECT F1": 0.0,
+      "Macro-F1": 0.24999999999999997,
+      "SupportedResponseRate": 0.575,
+      "UnsupportedAnswerRate": 0.425,
+      "EvidenceUseAccuracy": 0.6,
+      "OODAnswerRate": 1.0,
+      "TicketMissRate": 1.0
+    },
+    "proposed": {
+      "Tool Decision Accuracy": 0.676,
+      "ANSWER F1": 0.7755406413124534,
+      "TICKET F1": 0.4540816326530613,
+      "REJECT F1": 0.50187265917603,
+      "Macro-F1": 0.5771649777138482,
+      "SupportedResponseRate": 0.658,
+      "UnsupportedAnswerRate": 0.319,
+      "EvidenceUseAccuracy": 0.676,
+      "OODAnswerRate": 0.55,
+      "TicketMissRate": 0.555
+    }
+  },
+  "runtime_seconds": 41.70430059999853
+}

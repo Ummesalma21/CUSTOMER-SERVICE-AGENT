@@ -57,7 +57,7 @@ def main() -> None:
 
 
 def _proposed_config_used() -> str:
-    return "configs/final_eval_generator_fixed.yaml" if project_path("configs", "final_eval_generator_fixed.yaml").exists() else "configs/final_eval_balanced_triage_best.yaml"
+    return "configs/proposed_final.yaml"
 
 
 def _mixed_metrics(rows: list[dict]) -> dict:

@@ -1,0 +1,73 @@
+{
+  "config": "configs\\final_eval_balanced_triage_best.yaml",
+  "predictions": "outputs\\reports\\fresh_mixed_best_predictions.jsonl",
+  "count": 1000,
+  "baseline": {
+    "SupportedResponseRate": 0.575,
+    "UnsupportedAnswerRate": 0.425,
+    "EvidenceUseAccuracy": 0.6,
+    "per_label": {
+      "TICKET": {
+        "SupportedResponseRate": 0.0,
+        "UnsupportedAnswerRate": 1.0,
+        "EvidenceUseAccuracy": 0.0,
+        "count": 200
+      },
+      "ANSWER": {
+        "SupportedResponseRate": 0.9583333333333334,
+        "UnsupportedAnswerRate": 0.041666666666666664,
+        "EvidenceUseAccuracy": 1.0,
+        "count": 600
+      },
+      "REJECT": {
+        "SupportedResponseRate": 0.0,
+        "UnsupportedAnswerRate": 1.0,
+        "EvidenceUseAccuracy": 0.0,
+        "count": 200
+      }
+    }
+  },
+  "proposed": {
+    "SupportedResponseRate": 0.658,
+    "UnsupportedAnswerRate": 0.319,
+    "EvidenceUseAccuracy": 0.676,
+    "per_label": {
+      "TICKET": {
+        "SupportedResponseRate": 0.445,
+        "UnsupportedAnswerRate": 0.555,
+        "EvidenceUseAccuracy": 0.445,
+        "count": 200
+      },
+      "ANSWER": {
+        "SupportedResponseRate": 0.8366666666666667,
+        "UnsupportedAnswerRate": 0.16333333333333333,
+        "EvidenceUseAccuracy": 0.8666666666666667,
+        "count": 600
+      },
+      "REJECT": {
+        "SupportedResponseRate": 0.335,
+        "UnsupportedAnswerRate": 0.55,
+        "EvidenceUseAccuracy": 0.335,
+        "count": 200
+      }
+    }
+  },
+  "answer_only_grounding": {
+    "baseline": {
+      "Recall@5": 0.37833333333333335,
+      "MRR@10": 0.24869444444444436,
+      "EvidenceHit@5": 0.37833333333333335,
+      "CitationPrecision": 1.0
+    },
+    "proposed": {
+      "Recall@5": 0.37333333333333335,
+      "MRR@10": 0.2521388888888888,
+      "EvidenceHit@5": 0.37333333333333335,
+      "CitationPrecision": 1.0
+    }
+  },
+  "workflow_macro_f1": {
+    "baseline": 0.24999999999999997,
+    "proposed": 0.5771649777138482
+  }
+}

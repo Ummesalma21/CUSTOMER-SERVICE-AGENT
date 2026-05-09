@@ -24,7 +24,7 @@ TICKET_THRESHOLDS = [0.30, 0.35, 0.40, 0.45]
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="configs/final_eval_calibrated.yaml")
+    parser.add_argument("--config", default="configs/proposed_final.yaml")
     parser.add_argument("--mixed-path", default="data/processed/eval_mixed_1000.jsonl")
     args = parser.parse_args()
     base_config = load_config(args.config)
@@ -174,7 +174,7 @@ def _write_best_config(base_config: dict, selected: dict, balanced: bool = False
         f"# FalseAcceptRate: {selected['FalseAcceptRate']}",
         f"# TicketMissRate: {selected['TicketMissRate']}",
     ]
-    name = "final_eval_balanced_triage_best.yaml" if balanced else "final_eval_mixed_best.yaml"
+    name = "safety_tuned_ablation.yaml"
     project_path("configs", name).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

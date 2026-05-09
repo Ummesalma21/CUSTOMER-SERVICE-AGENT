@@ -8,6 +8,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Iterable
 
+from src.policy.answerability import support_topic_overlap_bonus
 from src.utils.io import project_path, read_json, read_jsonl, write_json
 
 
@@ -118,7 +119,7 @@ def search(query: str, top_k: int = 5, domain: str | None = None, index: dict | 
         qvec = _query_embedding(query, model_path)
     else:
         qvec = embed_text(query, int(index.get("dim", 128)))
-    fast_hits = _fast_search(index, qvec, q_tokens, top_k, domain)
+    fast_hits = _fast_search(index, qvec, q_tokens, top_k, domain, query)
     if fast_hits is not None:
         return fast_hits
     hits: list[dict] = []
@@ -126,10 +127,8 @@ def search(query: str, top_k: int = 5, domain: str | None = None, index: dict | 
         if domain and chunk.get("domain") != domain:
             continue
         score = cosine(qvec, chunk["embedding"])
-        text_tokens = set(tokenize(" ".join(str(chunk.get(k, "")) for k in ("doc_id", "title", "text"))))
-        if q_tokens.intersection({"benefit", "benefits"}) and q_tokens.intersection({"renew", "renewal", "renewing"}):
-            if text_tokens.intersection({"benefit", "benefits"}) and text_tokens.intersection({"renew", "renewal", "renewing"}):
-                score += 0.75
+        chunk_text = " ".join(str(chunk.get(k, "")) for k in ("doc_id", "title", "text"))
+        score += support_topic_overlap_bonus(query, chunk_text, max_bonus=0.75)
         item = {k: v for k, v in chunk.items() if k != "embedding"}
         item["score"] = round(float(score), 6)
         hits.append(item)
@@ -149,7 +148,7 @@ def _query_embedding(query: str, model_path: Path) -> list[float]:
     return vec
 
 
-def _fast_search(index: dict, qvec: list[float], q_tokens: set[str], top_k: int, domain: str | None) -> list[dict] | None:
+def _fast_search(index: dict, qvec: list[float], q_tokens: set[str], top_k: int, domain: str | None, query: str) -> list[dict] | None:
     try:
         import numpy as np
     except Exception:
@@ -171,9 +170,10 @@ def _fast_search(index: dict, qvec: list[float], q_tokens: set[str], top_k: int,
             return []
         scores = scores.copy()
         scores[~candidate_mask] = -1e9
-    if q_tokens.intersection({"benefit", "benefits"}) and q_tokens.intersection({"renew", "renewal", "renewing"}):
+    overlap_bonus = _support_overlap_bonuses(query, runtime["payloads"])
+    if overlap_bonus is not None:
         scores = scores.copy()
-        scores[runtime["benefits_renewal"]] += 0.75
+        scores += overlap_bonus
     limit = min(max(int(top_k), 0), len(chunks))
     if limit == 0:
         return []
@@ -208,20 +208,27 @@ def _runtime_index(index: dict) -> dict | None:
     vectors = np.asarray([c["embedding"] for c in chunks], dtype="float32")
     domains = np.asarray([str(c.get("domain", "")) for c in chunks])
     payloads = [{k: v for k, v in c.items() if k != "embedding"} for c in chunks]
-    benefits_renewal = []
-    for chunk in chunks:
-        toks = set(tokenize(" ".join(str(chunk.get(k, "")) for k in ("doc_id", "title", "text"))))
-        benefits_renewal.append(
-            bool(toks.intersection({"benefit", "benefits"}) and toks.intersection({"renew", "renewal", "renewing"}))
-        )
     _RUNTIME_INDEX = {
         "vectors": vectors,
         "domains": domains,
         "payloads": payloads,
-        "benefits_renewal": np.asarray(benefits_renewal, dtype=bool),
     }
     _RUNTIME_INDEX_ID = id(index)
     return _RUNTIME_INDEX
+
+
+def _support_overlap_bonuses(query: str, payloads: list[dict]):
+    try:
+        import numpy as np
+    except Exception:
+        return None
+    values = [
+        support_topic_overlap_bonus(query, " ".join(str(p.get(k, "")) for k in ("doc_id", "title", "text")), max_bonus=0.75)
+        for p in payloads
+    ]
+    if not any(values):
+        return None
+    return np.asarray(values, dtype="float32")
 
 
 def best_chunk_for_query(query: str, chunks: Iterable[dict], domain: str | None = None) -> dict | None:

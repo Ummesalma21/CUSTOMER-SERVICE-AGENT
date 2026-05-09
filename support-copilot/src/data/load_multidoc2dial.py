@@ -130,7 +130,7 @@ def offline_fixture() -> dict[str, Any]:
         {
             "doc_id": "ssa_renewal_03",
             "domain": "ssa",
-            "title": "Benefits renewal",
+            "title": "Online benefit renewal",
             "text": (
                 "You can renew eligible benefits online through the benefits portal. "
                 "The renewal flow requires identity verification, current address, and income information. "
@@ -175,7 +175,7 @@ def offline_fixture() -> dict[str, Any]:
         },
     ]
     dialogues = [
-        {"domain": "ssa", "turns": [{"speaker": "user", "text": "Can I renew my benefits online?"}]},
+        {"domain": "ssa", "turns": [{"speaker": "user", "text": "How do online benefit renewals work?"}]},
         {"domain": "ssa", "turns": [{"speaker": "user", "text": "The renewal page still says pending. Can someone check my case?"}]},
         {"domain": "ssa", "turns": [{"speaker": "user", "text": "How do I update my mailing address for benefits?"}]},
         {"domain": "dmv", "turns": [{"speaker": "user", "text": "Can I renew my driver license online?"}]},

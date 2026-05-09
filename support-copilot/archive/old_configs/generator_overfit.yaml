@@ -1,0 +1,27 @@
+mode: full
+seed: 42
+device: cuda
+
+generator_epochs: 5
+
+generator_training:
+  model_name: google/flan-t5-small
+  train_file: data/processed/generator_train.jsonl
+  val_file: data/processed/generator_train.jsonl
+  output_dir: outputs/generator/flan_t5_overfit_check
+  metrics_file: outputs/reports/generator_overfit_train_metrics.json
+  diagnostics_file: outputs/reports/generator_overfit_train_diagnostics.json
+  log_file: outputs/logs/generator_overfit_train.log
+  epochs: 5
+  batch_size: 4
+  gradient_accumulation_steps: 1
+  learning_rate: 5.0e-5
+  weight_decay: 0.0
+  max_train_examples: 96
+  max_val_examples: 96
+  max_source_length: 512
+  max_target_length: 96
+  gradient_clip_norm: 1.0
+  logging_steps: 10
+  fp16: false
+  local_files_only: true

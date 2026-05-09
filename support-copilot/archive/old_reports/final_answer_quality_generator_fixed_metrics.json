@@ -1,0 +1,37 @@
+{
+  "count": 500,
+  "reference_available": 500,
+  "reference_note": "Gold/reference answer text was available and used for token F1 and ROUGE-L.",
+  "baseline": {
+    "AnswerTokenF1": 0.19285114808798506,
+    "ROUGE-L": 0.16317571934198824,
+    "AnswerOutputCount": 500,
+    "NoFragmentRate": 0.838,
+    "FragmentRate": 0.162,
+    "CompleteAnswerRate": 0.838,
+    "FragmentCount": 81,
+    "CitationAttachedRate": 1.0,
+    "DuplicateCitationRate": 1.0,
+    "DuplicateCitationCount": 500,
+    "AverageAnswerLengthWords": 23.39,
+    "EmptyOrInvalidAnswerRate": 0.016,
+    "EmptyOrInvalidAnswerCount": 8,
+    "CitationRelevanceRate": 1.0
+  },
+  "proposed": {
+    "AnswerTokenF1": 0.1921515987028331,
+    "ROUGE-L": 0.16288779779689763,
+    "AnswerOutputCount": 377,
+    "NoFragmentRate": 1.0,
+    "FragmentRate": 0.0,
+    "CompleteAnswerRate": 1.0,
+    "FragmentCount": 0,
+    "CitationAttachedRate": 1.0,
+    "DuplicateCitationRate": 0.0,
+    "DuplicateCitationCount": 0,
+    "AverageAnswerLengthWords": 36.84880636604775,
+    "EmptyOrInvalidAnswerRate": 0.0,
+    "EmptyOrInvalidAnswerCount": 0,
+    "CitationRelevanceRate": 1.0
+  }
+}

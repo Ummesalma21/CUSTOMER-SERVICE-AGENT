@@ -19,7 +19,7 @@ LABELS = ["ANSWER", "TICKET", "REJECT"]
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="configs/final_eval_calibrated.yaml")
+    parser.add_argument("--config", default="configs/proposed_final.yaml")
     parser.add_argument("--mixed-path", default="data/processed/eval_mixed_1000.jsonl")
     parser.add_argument("--output-prefix", default=None)
     parser.add_argument("--rebuild", action="store_true")

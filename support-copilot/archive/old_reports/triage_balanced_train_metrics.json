@@ -1,0 +1,185 @@
+{
+  "trained_examples": 18000,
+  "validation_examples": 2000,
+  "model": "distilbert-base-uncased",
+  "backend": "distilbert-sequence-classifier",
+  "checkpoint": "outputs\\triage_balanced\\distilbert",
+  "train": {
+    "accuracy": 1.0,
+    "ANSWER precision": 1.0,
+    "ANSWER recall": 1.0,
+    "ANSWER F1": 1.0,
+    "TICKET precision": 1.0,
+    "TICKET recall": 1.0,
+    "TICKET F1": 1.0,
+    "REJECT precision": 1.0,
+    "REJECT recall": 1.0,
+    "REJECT F1": 1.0,
+    "macro_f1": 1.0,
+    "confusion_matrix": {
+      "ANSWER": {
+        "ANSWER": 8000,
+        "TICKET": 0,
+        "REJECT": 0
+      },
+      "TICKET": {
+        "ANSWER": 0,
+        "TICKET": 5000,
+        "REJECT": 0
+      },
+      "REJECT": {
+        "ANSWER": 0,
+        "TICKET": 0,
+        "REJECT": 5000
+      }
+    },
+    "TBP@0.15": 1.0,
+    "avg_margin": 11.981722634871801
+  },
+  "validation": {
+    "accuracy": 0.999,
+    "ANSWER precision": 1.0,
+    "ANSWER recall": 0.998,
+    "ANSWER F1": 0.998998998998999,
+    "TICKET precision": 0.998003992015968,
+    "TICKET recall": 1.0,
+    "TICKET F1": 0.9990009990009989,
+    "REJECT precision": 0.998003992015968,
+    "REJECT recall": 1.0,
+    "REJECT F1": 0.9990009990009989,
+    "macro_f1": 0.9990003323336656,
+    "confusion_matrix": {
+      "ANSWER": {
+        "ANSWER": 998,
+        "TICKET": 1,
+        "REJECT": 1
+      },
+      "TICKET": {
+        "ANSWER": 0,
+        "TICKET": 500,
+        "REJECT": 0
+      },
+      "REJECT": {
+        "ANSWER": 0,
+        "TICKET": 0,
+        "REJECT": 500
+      }
+    },
+    "TBP@0.15": 0.999,
+    "avg_margin": 11.599090072363616
+  },
+  "accuracy": 1.0,
+  "TBP@0.15": 1.0,
+  "avg_margin": 11.981722634871801,
+  "last_train_loss": 0.00013788705109618604,
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.13171204078630236,
+      "accuracy": 0.9995,
+      "ANSWER precision": 0.999000999000999,
+      "ANSWER recall": 1.0,
+      "ANSWER F1": 0.9995002498750626,
+      "TICKET precision": 1.0,
+      "TICKET recall": 1.0,
+      "TICKET F1": 1.0,
+      "REJECT precision": 1.0,
+      "REJECT recall": 0.998,
+      "REJECT F1": 0.998998998998999,
+      "macro_f1": 0.9994997496246872,
+      "confusion_matrix": {
+        "ANSWER": {
+          "ANSWER": 1000,
+          "TICKET": 0,
+          "REJECT": 0
+        },
+        "TICKET": {
+          "ANSWER": 0,
+          "TICKET": 500,
+          "REJECT": 0
+        },
+        "REJECT": {
+          "ANSWER": 1,
+          "TICKET": 0,
+          "REJECT": 499
+        }
+      },
+      "TBP@0.15": 0.9995,
+      "avg_margin": 10.463663291290402
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.002238867618681575,
+      "accuracy": 1.0,
+      "ANSWER precision": 1.0,
+      "ANSWER recall": 1.0,
+      "ANSWER F1": 1.0,
+      "TICKET precision": 1.0,
+      "TICKET recall": 1.0,
+      "TICKET F1": 1.0,
+      "REJECT precision": 1.0,
+      "REJECT recall": 1.0,
+      "REJECT F1": 1.0,
+      "macro_f1": 1.0,
+      "confusion_matrix": {
+        "ANSWER": {
+          "ANSWER": 1000,
+          "TICKET": 0,
+          "REJECT": 0
+        },
+        "TICKET": {
+          "ANSWER": 0,
+          "TICKET": 500,
+          "REJECT": 0
+        },
+        "REJECT": {
+          "ANSWER": 0,
+          "TICKET": 0,
+          "REJECT": 500
+        }
+      },
+      "TBP@0.15": 1.0,
+      "avg_margin": 11.510269433745183
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.0036314845460078183,
+      "accuracy": 0.999,
+      "ANSWER precision": 1.0,
+      "ANSWER recall": 0.998,
+      "ANSWER F1": 0.998998998998999,
+      "TICKET precision": 0.998003992015968,
+      "TICKET recall": 1.0,
+      "TICKET F1": 0.9990009990009989,
+      "REJECT precision": 0.998003992015968,
+      "REJECT recall": 1.0,
+      "REJECT F1": 0.9990009990009989,
+      "macro_f1": 0.9990003323336656,
+      "confusion_matrix": {
+        "ANSWER": {
+          "ANSWER": 998,
+          "TICKET": 1,
+          "REJECT": 1
+        },
+        "TICKET": {
+          "ANSWER": 0,
+          "TICKET": 500,
+          "REJECT": 0
+        },
+        "REJECT": {
+          "ANSWER": 0,
+          "TICKET": 0,
+          "REJECT": 500
+        }
+      },
+      "TBP@0.15": 0.999,
+      "avg_margin": 11.599090072363616
+    }
+  ],
+  "loss": "cross_entropy + lambda_boundary * softplus(max_wrong - correct + mu)",
+  "class_weights": {
+    "ANSWER": 1.0,
+    "TICKET": 1.2999999523162842,
+    "REJECT": 1.5
+  }
+}

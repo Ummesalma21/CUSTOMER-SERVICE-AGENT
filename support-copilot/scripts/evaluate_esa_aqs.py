@@ -18,15 +18,19 @@ from src.utils.io import project_path, read_jsonl, write_json, write_jsonl
 
 PREDICTION_CANDIDATES = [
     "outputs/reports/final_answer_only_supported_synthesis_predictions.jsonl",
+    "archive/old_outputs/final_answer_only_supported_synthesis_predictions.jsonl",
     "outputs/reports/final_answer_only_generator_fixed_predictions.jsonl",
+    "archive/old_outputs/final_answer_only_generator_fixed_predictions.jsonl",
     "outputs/reports/final_answer_only_generator_clean_predictions.jsonl",
     "outputs/reports/final_answer_only_predictions.jsonl",
+    "archive/old_outputs/final_answer_only_predictions.jsonl",
     "outputs/reports/final_answer_quality_predictions_scored.jsonl",
+    "archive/old_outputs/final_answer_quality_predictions_scored.jsonl",
 ]
 
 DEFAULT_CONFIGS = [
-    "configs/final_eval_generator_fixed.yaml",
-    "configs/final_eval_balanced_triage_best.yaml",
+    "configs/proposed_final.yaml",
+    "configs/baseline_pretrained_rag.yaml",
 ]
 
 THRESHOLDS = {

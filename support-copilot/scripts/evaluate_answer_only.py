@@ -14,7 +14,7 @@ from src.utils.io import load_config, project_path, read_jsonl, write_json, writ
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="configs/final_eval_balanced_triage.yaml")
+    parser.add_argument("--config", default="configs/proposed_final.yaml")
     parser.add_argument("--eval-path", default="data/processed/eval_set.jsonl")
     parser.add_argument("--max-rows", type=int, default=0)
     args = parser.parse_args()

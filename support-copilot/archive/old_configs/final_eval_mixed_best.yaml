@@ -1,0 +1,32 @@
+mode: full
+seed: 42
+device: cuda
+
+data:
+  max_eval_queries: 1000
+
+routing:
+  top_k_domains: 3
+  fallback_to_global_search: true
+  fallback_score_threshold: 0.75
+
+triage:
+  reject_threshold: 0.4
+  nearest_kb_similarity_threshold: 0.4
+  centroid_similarity_threshold: 0.4
+  reject_require_lexical_low: true
+  ticket_threshold: 0.3
+
+top_k_retrieval: 20
+top_k_rerank: 5
+max_rerank_candidates: 15
+use_reranker: false
+tau_domain: 0.35
+tau_chunk: 0.3
+fp16: true
+
+# Selected by scripts/tune_thresholds_mixed.py without retraining.
+# Macro-F1: 0.6151178906669424
+# OODAnswerRate: 0.58
+# FalseAcceptRate: 0.585
+# TicketMissRate: 0.555

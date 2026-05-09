@@ -6,6 +6,8 @@ import time
 from src.generation.templates import cited_answer, reject_answer, ticket_answer
 from src.generation.answer_quality import is_support_like, is_vague_query, validate_answer
 from src.generation.grounded_generator import generate_grounded_answer
+from src.policy.answerability import should_reject as policy_should_reject
+from src.policy.answerability import should_ticket as policy_should_ticket
 from src.preference.score_candidates import choose_best
 from src.reranking.rerank import rerank
 from src.retrieval.search_kb import search
@@ -28,9 +30,6 @@ def run_proposed(query: str, config: dict) -> dict:
     routed_domains = [d["domain"] for d in domains[: int(config.get("top_k_domains", 2))]]
     top_domain = routed_domains[0] if routed_domains else None
     triage = predict_triage(query, config)
-    q_lower = query.lower()
-    if "benefit" in q_lower and ("renew" in q_lower or "renewal" in q_lower):
-        triage["label"] = "ANSWER"
     max_centroid = domains[0]["centroid_similarity"] if domains else 0.0
     lexical_gate = route.get("lexical_gate", {})
     lexical_low = (not lexical_gate.get("pass", False)) and int(lexical_gate.get("match_count", 0)) == 0
@@ -185,10 +184,15 @@ def _apply_triage_thresholds(
     centroid_threshold = float(config.get("reject_centroid_similarity_threshold", config.get("tau_domain", 0.35)))
     kb_threshold = float(config.get("reject_nearest_kb_similarity_threshold", config.get("reject_threshold", 0.18)))
     require_lexical_low = bool(config.get("reject_require_lexical_low", True))
-    centroid_low = max_centroid < centroid_threshold
-    kb_low = nearest_kb_similarity < kb_threshold
-    lexical_ok = lexical_low if require_lexical_low else True
-    should_reject = lexical_ok and centroid_low and kb_low
+    should_reject = policy_should_reject(
+        query,
+        lexical_low=lexical_low,
+        centroid_similarity=max_centroid,
+        nearest_kb_similarity=nearest_kb_similarity,
+        centroid_threshold=centroid_threshold,
+        kb_threshold=kb_threshold,
+        require_lexical_low=require_lexical_low,
+    )
     ticket_threshold = float(config.get("ticket_threshold", 0.20))
     support_like = (
         (not lexical_low)
@@ -196,7 +200,7 @@ def _apply_triage_thresholds(
         or nearest_kb_similarity >= ticket_threshold
     )
     ticket_like = _ticket_like_support_issue(query, lexical_gate, max_centroid, config)
-    if ticket_like and not should_reject:
+    if (ticket_like or policy_should_ticket(query, nearest_kb_similarity, ticket_threshold)) and not should_reject:
         return "TICKET"
     if triage["label"] == "REJECT" and not should_reject and support_like:
         return "TICKET"

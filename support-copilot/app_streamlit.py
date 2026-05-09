@@ -13,18 +13,10 @@ from src.utils.io import load_config
 
 
 DEFAULT_CONFIG = (
-    "configs/final_eval_generator_fixed.yaml"
-    if Path("configs/final_eval_generator_fixed.yaml").exists()
-    else "configs/final_eval_generator.yaml"
-    if Path("configs/final_eval_generator.yaml").exists()
-    else "configs/final_eval_balanced_triage_best.yaml"
+    "configs/proposed_final.yaml"
+    if Path("configs/proposed_final.yaml").exists()
+    else "configs/baseline_pretrained_rag.yaml"
 )
-EXAMPLES = [
-    "Can I renew my benefits online?",
-    "Who won the IPL yesterday?",
-    "My benefits renewal is stuck as pending for case ACCT-555123; can someone check my account?",
-    "Why am I here?",
-]
 
 
 def main() -> None:

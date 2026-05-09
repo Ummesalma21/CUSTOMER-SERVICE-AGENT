@@ -1,23 +1,17 @@
 # Reject-Aware Domain-Routed Customer Support Copilot
 
-This project implements a support RAG system over MultiDoc2Dial-style knowledge bases. It routes questions to likely support domains, searches cited KB passages, and uses structured tools to choose one of three support actions:
+## Overview
 
-- `ANSWER`: return a grounded answer with citations.
-- `TICKET`: create/escalate an account-specific or manual-review support issue.
-- `REJECT`: conservatively reject clearly unsupported or out-of-domain queries.
+This project builds a customer-support RAG system over MultiDoc2Dial-style support knowledge bases. The system retrieves cited KB evidence, routes questions to support domains, validates answerability, and chooses one support action: `ANSWER`, `TICKET`, or `REJECT`. The final claim is deliberately narrow: compared with a simple pretrained RAG baseline, the proposed system preserves answer retrieval while improving support workflow control and unsupported-answer safety.
 
-The final system is designed to preserve answerable customer-question retrieval while adding workflow control and high-precision rejection.
+## Final Systems
 
-## Problem Statement Mapping
+- **Baseline-0 Pretrained RAG**: official assignment baseline in `configs/baseline_pretrained_rag.yaml`. It uses pretrained `sentence-transformers/all-MiniLM-L6-v2`, full KB search, no reranker, no routing, no triage/tool-policy, no ticketing, no rejection, and always returns `ANSWER` with a citation.
+- **Proposed Final System**: `configs/proposed_final.yaml`. It uses the trained retriever/index, domain routing, balanced triage/tool-policy, structured tools, conservative ticket/reject behavior, and grounded answer validation/generation. Reranker is off.
+- **Baseline-1 Fine-tuned RAG**: an ablation only. It uses the fine-tuned retriever but has no workflow tools.
+- **Safety-tuned and reranker variants**: ablations in `configs/safety_tuned_ablation.yaml` and `configs/reranker_ablation.yaml`.
 
-- Retrieve KB passages with citations: yes.
-- Tool calling: `RouteDomain`, `SearchKB`, `GetPolicy`, `CreateTicket`, `RejectQuery`.
-- Escalation/ticket creation: yes.
-- Baseline comparison: yes, against retrieval-only baseline RAG.
-- Trained components: retriever, reranker, triage/tool-policy model, lightweight preference/rubric ranker.
-- Demo: CLI and Streamlit UI.
-- Latency: reported on the final mixed workflow evaluation.
-- Structured tool schema: `schemas/tool_schema.json`.
+Structured tool calls are specified in `schemas/tool_schema.json`.
 
 ## Setup
 
@@ -27,177 +21,106 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-If Streamlit is not installed and you want the UI:
+Optional UI dependency:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install streamlit
 ```
 
-## Data
+## Demo Commands
 
-The project uses IBM/MultiDoc2Dial-derived support documents, dialogue turns, and evidence references. Processed data is written under `data/processed/`.
-
-The final workflow evaluation is mixed:
-
-- ANSWER examples come from real MultiDoc2Dial answerable turns.
-- TICKET examples are synthetic in-domain account-specific/manual-review support cases.
-- REJECT examples are synthetic out-of-domain, support-like out-of-domain, and near-boundary queries.
-
-This is intentional because MultiDoc2Dial mainly contains answerable dialogue turns and does not provide enough native ticket/reject workflow examples.
-
-## Run Demo
-
-CLI demo:
+CLI:
 
 ```powershell
-.\.venv\Scripts\python.exe scripts\demo_cli.py --query "Can I renew my benefits online?" --config configs\final_eval_generator.yaml
+.\.venv\Scripts\python.exe scripts\demo_cli.py --query "Can I renew my benefits online?" --config configs\proposed_final.yaml
 ```
 
-Main final evaluation/demo config without generator fallback emphasis:
-
-```powershell
-.\.venv\Scripts\python.exe scripts\demo_cli.py --query "Can I renew my benefits online?" --config configs\final_eval_balanced_triage_best.yaml
-```
-
-Streamlit UI:
+Streamlit:
 
 ```powershell
 .\.venv\Scripts\python.exe -m streamlit run app_streamlit.py
 ```
 
-See `DEMO_UI.md` for UI notes and presentation examples.
+More demo notes are in `DEMO_UI.md`.
 
-## Training Commands
+## Training And Reproduction Commands
 
-Full pipeline training:
+Full pipeline:
 
 ```powershell
-.\.venv\Scripts\python.exe scripts\prepare_data.py --config configs\full.yaml
-.\.venv\Scripts\python.exe scripts\train_retriever.py --config configs\full.yaml
-.\.venv\Scripts\python.exe scripts\build_index.py --config configs\full.yaml
-.\.venv\Scripts\python.exe scripts\train_reranker.py --config configs\full.yaml
-.\.venv\Scripts\python.exe scripts\train_triage.py --config configs\full.yaml
-.\.venv\Scripts\python.exe scripts\train_preference.py --config configs\full.yaml
+.\.venv\Scripts\python.exe scripts\prepare_data.py --config configs\train_full.yaml
+.\.venv\Scripts\python.exe scripts\train_retriever.py --config configs\train_full.yaml
+.\.venv\Scripts\python.exe scripts\build_index.py --config configs\train_full.yaml
+.\.venv\Scripts\python.exe scripts\train_reranker.py --config configs\train_full.yaml
+.\.venv\Scripts\python.exe scripts\train_triage.py --config configs\train_full.yaml
+.\.venv\Scripts\python.exe scripts\train_preference.py --config configs\train_full.yaml
 ```
 
-Balanced triage retraining used for the final workflow model:
+Balanced triage/tool-policy:
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\build_balanced_triage_data.py
 .\.venv\Scripts\python.exe scripts\train_triage.py --config configs\triage_balanced.yaml
 ```
 
-Grounded generator fine-tuning:
+Generator debugging/fixed generator:
 
 ```powershell
-.\.venv\Scripts\python.exe scripts\prepare_data.py --config configs\generator_finetune.yaml
-.\.venv\Scripts\python.exe scripts\train_generator.py --config configs\generator_finetune.yaml
+.\.venv\Scripts\python.exe scripts\train_generator.py --config configs\generator_fixed.yaml
 ```
-
-`prepare_data.py` now builds sentence-aware KB chunks and writes `data/processed/generator_train.jsonl`, `generator_val.jsonl`, and `generator_test.jsonl` from real user-to-agent dialogue turns when references are available.
-
-The final cleanup did not retrain retriever, reranker, triage, or generator checkpoints.
 
 ## Evaluation Commands
 
-Mixed workflow evaluation:
+Official Baseline-0 vs proposed comparison:
 
 ```powershell
-.\.venv\Scripts\python.exe scripts\evaluate_mixed.py --config configs\final_eval_balanced_triage_best.yaml
+.\.venv\Scripts\python.exe scripts\evaluate_baseline0_vs_proposed.py
 ```
 
-Mixed grounding/evidence-use evaluation:
+ESA/AQS:
 
 ```powershell
-.\.venv\Scripts\python.exe scripts\evaluate_grounding_mixed.py --config configs\final_eval_balanced_triage_best.yaml
+.\.venv\Scripts\python.exe scripts\evaluate_esa_aqs.py
 ```
 
-Answer-only retrieval/grounding evaluation:
+Unsupported-answer safety:
 
 ```powershell
-.\.venv\Scripts\python.exe scripts\evaluate_answer_only.py --config configs\final_eval_generator.yaml
+.\.venv\Scripts\python.exe scripts\evaluate_unsupported_answer_safety.py
 ```
 
-Answer-quality and formatting evaluation:
+Threshold ablation:
 
 ```powershell
-.\.venv\Scripts\python.exe scripts\evaluate_answer_quality.py --config configs\final_eval_generator.yaml
+.\.venv\Scripts\python.exe scripts\tune_final_thresholds.py
 ```
 
 ## Final Results
 
-### Table A: Mixed Workflow
-
-| Metric | Baseline RAG | Proposed Balanced Triage |
+| Metric | Baseline-0 Pretrained RAG | Proposed Final |
 |---|---:|---:|
-| Macro-F1 | 0.250 | 0.577 |
-| Tool Decision Accuracy | 0.600 | 0.676 |
-| ANSWER F1 | 0.750 | 0.776 |
-| TICKET F1 | 0.000 | 0.454 |
-| REJECT F1 | 0.000 | 0.502 |
-| Reject Precision | 0.000 | 1.000 |
-| FalseRejectRate | 0.000 | 0.000 |
+| Recall@5 | 0.1820 | 0.3620 |
+| EvidenceHit@5 | 0.1820 | 0.3620 |
+| ESA | 0.4760 | 0.6380 |
+| AQS | 0.6270 | 0.7187 |
+| UnsupportedAnswerRate | 1.0000 | 0.5525 |
+| UnsupportedAnswerPreventionRate | 0.0000 | 0.4475 |
+| Macro-F1 | 0.2500 | 0.5772 |
+| REE@5 | 0.1820 | 0.3947 |
 
-### Table B: Evidence-Use Grounding
+Final report files live in `outputs/reports/`; start with `outputs/reports/FINAL_RESULTS_FOR_REPORT.md` and `outputs/reports/REPORT_INDEX.md`.
 
-| Metric | Baseline RAG | Proposed Balanced Triage |
-|---|---:|---:|
-| SupportedResponseRate | 0.575 | 0.658 |
-| UnsupportedAnswerRate | 0.425 | 0.319 |
-| EvidenceUseAccuracy | 0.600 | 0.676 |
+## Ablations
 
-### Table C: Answer-Only Retrieval/Grounding
+- **Safety tuned**: prevents more unsupported answers, but lowers ESA/AQS and tickets more answerable cases.
+- **Reranker**: improves some mixed workflow safety metrics, but hurts answer-only evidence quality and adds latency.
+- **Fine-tuned RAG**: strong answer-only extraction ablation, but lacks ticket/reject workflow control.
+- **Generator**: answer quality remains a limitation; supported synthesis improves ESA/AQS, but this is not a substitute for a fully trained grounded generator.
 
-| Metric | Baseline RAG | Proposed Balanced Triage |
-|---|---:|---:|
-| Recall@5 | 0.360 | 0.362 |
-| EvidenceHit@5 | 0.360 | 0.362 |
-| CitationPrecision | 1.000 | 1.000 |
-
-The fresh sentence-aware run slightly improves Recall@5 over the fresh baseline, but retrieval is still not the main gain; the main gain is workflow and evidence-use behavior.
-
-### Table D: Answer Quality / Formatting
-
-Reference answer text is now available for the fresh answer-only evaluation, so token F1 and ROUGE-L are reported. Formatting improves, but lexical overlap is lower than the baseline.
-
-| Metric | Baseline RAG | Proposed Balanced Triage |
-|---|---:|---:|
-| AnswerTokenF1 | 0.193 | 0.170 |
-| ROUGE-L | 0.163 | 0.140 |
-| NoFragmentRate | 0.838 | 1.000 |
-| FragmentRate | 0.162 | 0.000 |
-| DuplicateCitationRate | 1.000 | 0.000 |
-| EmptyOrInvalidAnswerRate | 0.016 | 0.000 |
-| CompleteAnswerRate | 0.838 | 1.000 |
-| CitationAttachedRate | 1.000 | 1.000 |
-
-### Latency
-
-Final mixed workflow latency:
-
-| Metric | Value |
-|---|---:|
-| Average latency | 49.88 ms |
-| p95 latency | 62.80 ms |
-| Throughput | 20.05 qps |
-
-## Grounded Generator
-
-`configs/final_eval_generator.yaml` enables a small grounded generator path for `ANSWER` synthesis. Tool decisions are still made by routing and triage/tool-policy logic. The generator receives the user question and retrieved evidence and is instructed to answer only from evidence or return `INSUFFICIENT_EVIDENCE`.
-
-Citations are attached by the system from retrieved passages, not generated by the model. If FLAN-T5 is unavailable, returns insufficient evidence, or produces a fragment/citation-like output, inference falls back to the extractive synthesizer in `src/generation/extractive_synthesizer.py`.
-
-For task-specific generator training, use `configs/generator_finetune.yaml`; the trained checkpoint is expected at `outputs/generator/flan_t5` and can be used with `configs/final_eval_generator_finetuned.yaml`.
-
-## Important Limitations
+## Limitations
 
 - TICKET and REJECT examples are partly synthetic because MultiDoc2Dial mainly contains answerable turns.
-- The final system preserves retrieval rather than significantly improving retrieval.
-- Reject behavior is intentionally conservative to avoid rejecting answerable customer questions.
-- Answer quality remains a limitation compared with a fully trained grounded LLM generator.
-- No DPO or generator fine-tuning is claimed.
-- FLAN-T5 should only be described as used when the model is actually available in the local environment; validated inference can still fall back to extractive synthesis when generation quality is insufficient.
-
-## Earlier Calibration Runs / Ablations
-
-Earlier debug and calibration runs produced weaker proposed retrieval and routing numbers. Those files are kept under `outputs/reports/archive/` for auditability, but they are not the final submitted results. The final narrative should use `outputs/reports/FINAL_RESULTS_FOR_REPORT.md` and the final metrics files listed in `outputs/reports/REPORT_INDEX.md`.
+- The proposed system improves workflow and safety more than retrieval quality.
+- Reject behavior is intentionally conservative to avoid rejecting answerable support questions.
+- ESA/AQS are automatic proxy metrics, not human evaluation.
+- The archive contains older failed or intermediate experiments for auditability, but they are not the final submitted results.

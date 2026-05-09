@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from src.retrieval.search_kb import cosine, embed_text, load_index, tokenize
+from src.policy.answerability import support_topic_overlap_bonus
+from src.retrieval.search_kb import cosine, embed_text, load_index
 from src.routing.domain_keywords import lexical_gate
 from src.utils.io import project_path, read_json
 
@@ -11,13 +12,11 @@ def route_query(query: str, top_k_domains: int = 2) -> dict:
     qvec = embed_text(query)
     routed = []
     gate = lexical_gate(query, keywords)
-    toks = set(tokenize(query))
     for row in centroids:
         sim = cosine(qvec, row["centroid"])
         matched = gate["matches"].get(row["domain"], [])
         score = sim + 0.08 * len(matched)
-        if row["domain"] == "ssa" and {"benefits", "renew"}.issubset(toks):
-            score += 0.35
+        score += support_topic_overlap_bonus(query, " ".join(matched), max_bonus=0.20)
         routed.append(
             {
                 "domain": row["domain"],

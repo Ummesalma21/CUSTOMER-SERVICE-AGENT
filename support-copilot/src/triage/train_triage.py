@@ -269,7 +269,7 @@ def predict_with_model(query: str, model: dict) -> dict:
     tok_set = set(toks)
     support_terms = {"benefit", "benefits", "renew", "renewal", "license", "registration", "address", "claim", "claims", "veterans", "vehicle", "portal"}
     ticket_terms = {"pending", "error", "rejected", "case", "someone", "review", "check"}
-    reject_terms = {"ipl", "python", "pasta", "france", "netflix", "iphone", "amazon", "airline", "passport", "black", "holes"}
+    reject_terms = {"cricket", "python", "pasta", "france", "netflix", "iphone", "amazon", "airline", "passport", "black", "holes"}
     scores = []
     for label in model["labels"]:
         w = model["weights"].get(label, {})

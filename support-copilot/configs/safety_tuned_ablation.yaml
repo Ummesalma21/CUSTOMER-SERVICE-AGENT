@@ -1,0 +1,53 @@
+# Threshold tuned without retraining by scripts/tune_final_thresholds.py
+# Reranker intentionally remains off for the final proposed architecture.
+# Selection note: No candidate satisfied all constraints by thresholding only; selected best safety-preserving config. ESA did not exceed current 0.5300; AQS did not exceed current 0.6733; selected config changes more than 2% of answerable rows away from ANSWER
+mode: full
+seed: 42
+device: cuda
+
+data:
+  max_eval_queries: 1000
+
+routing:
+  top_k_domains: 3
+  fallback_to_global_search: true
+  fallback_score_threshold: 0.65
+
+triage:
+  checkpoint: outputs/triage_balanced/distilbert
+  reject_threshold: 0.25
+  nearest_kb_similarity_threshold: 0.25
+  centroid_similarity_threshold: 0.3
+  reject_require_lexical_low: true
+  ticket_threshold: 0.3
+
+generation:
+  enabled: true
+  model_name: outputs/generator/flan_t5_fixed
+  fallback_model_name: outputs/generator/flan_t5_fixed
+  max_new_tokens: 96
+  num_beams: 4
+  do_sample: false
+  top_evidence_count: 1
+  answer_only: true
+  insufficient_token: INSUFFICIENT_EVIDENCE
+
+answer_quality:
+  enabled: true
+  min_answer_words: 6
+  block_fragment_answers: true
+  strip_inline_citations: true
+  deduplicate_citations: true
+  reject_vague_queries: true
+
+thresholds:
+  answerability_threshold: 0.45
+  esa_accept_threshold: 0.0
+
+top_k_retrieval: 20
+top_k_rerank: 5
+max_rerank_candidates: 15
+use_reranker: false
+tau_domain: 0.35
+tau_chunk: 0.3
+fp16: false

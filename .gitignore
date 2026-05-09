@@ -35,6 +35,9 @@ support-copilot/outputs/reports/*predictions*.jsonl
 support-copilot/outputs/reports/*scored.jsonl
 support-copilot/outputs/reports/tool_traces.jsonl
 support-copilot/outputs/reports/archive/*.jsonl
+support-copilot/archive/old_outputs/
+support-copilot/archive/old_logs/*.log
+support-copilot/archive/old_runs/
 
 # Logs
 support-copilot/outputs/logs/*.log

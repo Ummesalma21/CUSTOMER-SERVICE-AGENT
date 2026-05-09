@@ -1,0 +1,25 @@
+mode: full
+seed: 42
+device: cuda
+
+generator_epochs: 1
+
+generator_training:
+  model_name: google/flan-t5-small
+  train_file: data/processed/generator_train.jsonl
+  val_file: data/processed/generator_val.jsonl
+  output_dir: outputs/generator/flan_t5_fixed
+  metrics_file: outputs/reports/generator_fixed_full_train_metrics.json
+  diagnostics_file: outputs/reports/generator_fixed_train_diagnostics.json
+  log_file: outputs/logs/generator_fixed_full_train.log
+  epochs: 1
+  batch_size: 2
+  gradient_accumulation_steps: 8
+  learning_rate: 5.0e-5
+  weight_decay: 0.01
+  max_source_length: 512
+  max_target_length: 96
+  gradient_clip_norm: 1.0
+  logging_steps: 50
+  fp16: false
+  local_files_only: true

@@ -10,7 +10,7 @@ except Exception:  # pragma: no cover
 
 if FastAPI:
     app = FastAPI(title="Reject-Aware Support Copilot")
-    CONFIG = load_config("configs/smoke.yaml")
+    CONFIG = load_config("configs/proposed_final.yaml")
 
     @app.get("/health")
     def health() -> dict:
@@ -21,4 +21,3 @@ if FastAPI:
         return run_proposed(payload.get("query", ""), CONFIG)
 else:
     app = None
-

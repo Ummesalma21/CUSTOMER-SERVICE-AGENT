@@ -2,7 +2,7 @@ from __future__ import annotations
 
 
 EASY_REJECTS = [
-    "Who won the IPL match yesterday?",
+    "Who won yesterday's cricket league match?",
     "Write Python code for merge sort.",
     "Give me a pasta recipe.",
     "What is the capital of France?",
@@ -65,4 +65,3 @@ def ticket_examples(domains: list[str], start: int = 0) -> list[dict]:
             }
         )
     return rows
-

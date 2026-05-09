@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from src.policy.answerability import support_topic_overlap_bonus
 from src.retrieval.search_kb import tokenize
 from src.utils.io import project_path, read_json
 
@@ -53,8 +54,6 @@ def rerank(query: str, passages: list[dict], top_k: int = 5) -> list[dict]:
 
 
 def _domain_hint_boost(q_tokens: set[str], passage: dict) -> float:
-    text_tokens = set(tokenize(" ".join(str(passage.get(k, "")) for k in ("doc_id", "title", "text"))))
-    if q_tokens.intersection({"benefit", "benefits"}) and q_tokens.intersection({"renew", "renewal", "renewing"}):
-        if text_tokens.intersection({"benefit", "benefits"}) and text_tokens.intersection({"renew", "renewal", "renewing"}):
-            return 25.0
-    return 0.0
+    query_text = " ".join(q_tokens)
+    passage_text = " ".join(str(passage.get(k, "")) for k in ("doc_id", "title", "text"))
+    return 5.0 * support_topic_overlap_bonus(query_text, passage_text, max_bonus=0.25)

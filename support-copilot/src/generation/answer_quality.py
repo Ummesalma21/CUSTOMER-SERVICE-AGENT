@@ -4,6 +4,9 @@ import re
 import string
 from typing import Any
 
+from src.policy.answerability import is_vague_query as policy_is_vague_query
+from src.policy.answerability import support_keyword_score
+
 
 CITATION_RE = re.compile(r"\[doc_id=(.*?), chunk_id=(.*?), span=(\d+)-(\d+)\]")
 CONTINUATION_WORDS = {"and", "or", "but", "than", "to", "from", "with", "because", "that"}
@@ -99,30 +102,16 @@ def is_fragment_answer(answer: str, min_answer_words: int = 6) -> bool:
 
 def is_support_like(query: str) -> bool:
     q = f" {(query or '').lower()} "
-    return any(term in q for term in SUPPORT_TERMS)
+    return support_keyword_score(query) > 0 or any(term in q for term in SUPPORT_TERMS)
 
 
 def is_vague_query(query: str, max_centroid: float = 0.0, nearest_kb_similarity: float = 0.0) -> bool:
-    q = (query or "").strip().lower()
-    normalized = re.sub(rf"[{re.escape(string.punctuation)}]", "", q)
+    normalized = re.sub(rf"[{re.escape(string.punctuation)}]", "", (query or "").strip().lower())
     words = re.findall(r"\b\w+\b", normalized)
-    vague_patterns = {
-        "why am i here",
-        "what is this",
-        "can you help me",
-        "tell me more",
-        "what should i do",
-    }
-    if normalized in vague_patterns:
-        return True
     conversational_terms = {"joke", "funny", "mood", "chat", "lighten", "trying", "feel", "hello", "hi"}
     if not is_support_like(query) and conversational_terms.intersection(words):
         return True
-    weak_signals = max_centroid < 0.25 and nearest_kb_similarity < 0.30
-    if len(words) <= 4 and weak_signals and not is_support_like(query):
-        return True
-    few_specifics = len([w for w in words if len(w) > 4]) <= 1
-    return weak_signals and few_specifics and not is_support_like(query)
+    return policy_is_vague_query(query, max_centroid=max_centroid, nearest_kb_similarity=nearest_kb_similarity)
 
 
 def validate_answer(answer: str, query: str, citations: list[dict], min_answer_words: int = 6) -> dict:

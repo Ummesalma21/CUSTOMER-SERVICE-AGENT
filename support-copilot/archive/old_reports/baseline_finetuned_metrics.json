@@ -1,0 +1,26 @@
+{
+  "system": "baseline_1_finetuned_rag",
+  "answer_only": {
+    "Recall@1": 0.158,
+    "Recall@5": 0.362,
+    "MRR@10": 0.23273333333333332,
+    "EvidenceHit@5": 0.362,
+    "CitationPrecision": 1.0,
+    "GroundedAnswerRate": 1.0,
+    "UnsupportedClaimRate": 0.0,
+    "ESA": 0.748,
+    "AQS": 0.7840000000000004
+  },
+  "mixed_workflow": {
+    "Tool Decision Accuracy": 0.6,
+    "ANSWER F1": 0.7499999999999999,
+    "TICKET F1": 0.0,
+    "REJECT F1": 0.0,
+    "Macro-F1": 0.24999999999999997,
+    "SupportedResponseRate": 0.575,
+    "UnsupportedAnswerRate": 0.425,
+    "EvidenceUseAccuracy": 0.6,
+    "OODAnswerRate": 1.0,
+    "TicketMissRate": 1.0
+  }
+}

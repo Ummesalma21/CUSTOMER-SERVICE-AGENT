@@ -1,16 +1,20 @@
 # Config Guide
 
-Use these configs for final submission:
+This folder contains only final or reproducible configs. Older smoke, debug, calibration, and failed-run configs are preserved in `archive/old_configs/`.
 
-- `final_eval_balanced_triage_best.yaml`: main final evaluation/demo config. Uses existing retriever/reranker/index artifacts and the balanced triage checkpoint with conservative reject thresholds.
-- `final_eval_generator.yaml`: presentation/demo config that enables grounded answer synthesis. It tries local FLAN-T5 and falls back to extractive synthesis when the generator is unavailable.
-- `generator_finetune.yaml`: supervised grounded-generator fine-tuning config using `data/processed/generator_train.jsonl`.
-- `final_eval_generator_finetuned.yaml`: demo/eval config that uses `outputs/generator/flan_t5` after generator fine-tuning. If that checkpoint is missing, use `final_eval_generator.yaml`.
-- `triage_balanced.yaml`: balanced triage retraining config for the final tool-policy checkpoint.
-- `full.yaml`: intended full training config for data prep, retriever, index, reranker, triage, and preference/rubric ranker.
-- `full_local.yaml`: reduced local training/development config.
-- `smoke.yaml`: tiny scaffold/smoke test config.
-- `debug_real.yaml`: small real-data debugging config.
-- `final_eval_balanced_triage.yaml`, `final_eval_calibrated.yaml`, and `final_eval_mixed_best.yaml`: historical calibration/development configs kept for reproducibility.
+## Official Final Configs
 
-The final reported metrics should be read from `outputs/reports/FINAL_RESULTS_FOR_REPORT.md` and the final metric files listed in `outputs/reports/REPORT_INDEX.md`.
+- `baseline_pretrained_rag.yaml`: official Baseline-0. Uses pretrained `sentence-transformers/all-MiniLM-L6-v2`, full KB search, no routing, no reranker, no triage, no ticketing, no rejection.
+- `proposed_final.yaml`: main final proposed system. Uses the trained retriever/index, domain routing, balanced triage/tool-policy, conservative ticket/reject behavior, and grounded answer validation/generation. Reranker is off.
+- `safety_tuned_ablation.yaml`: threshold-tuned safety ablation. It reduces unsupported direct answers but lowers ESA/AQS, so it is not the main final answer-quality config.
+- `reranker_ablation.yaml`: proposed-system reranker ablation. It is useful for analysis, but the final reported architecture keeps reranker off.
+
+## Reproduction Configs
+
+- `train_full.yaml`: full training/reproduction config alias for the final training intent.
+- `triage_balanced.yaml`: balanced triage/tool-policy retraining config.
+- `generator_fixed.yaml`: stable generator training/inference config used during generator debugging.
+
+## Archive
+
+Historical configs, including `smoke.yaml`, `debug_real.yaml`, older `final_eval_*` variants, failed generator configs, and rechunking experiments, live in `archive/old_configs/`.

@@ -14,7 +14,7 @@ from src.utils.io import load_config, project_path, read_jsonl, write_jsonl
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="configs/generator_overfit.yaml")
+    parser.add_argument("--config", default="configs/generator_fixed.yaml")
     parser.add_argument("--examples", type=int, default=10)
     args = parser.parse_args()
     config = load_config(args.config)

@@ -26,7 +26,7 @@ REFERENCE_FIELDS = ["gold_answer", "reference_answer", "target_answer", "expecte
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--predictions", default="outputs/reports/final_answer_only_predictions.jsonl")
-    parser.add_argument("--config", default="configs/final_eval_generator.yaml")
+    parser.add_argument("--config", default="configs/proposed_final.yaml")
     args = parser.parse_args()
     path = project_path(*Path(args.predictions).parts)
     if not path.exists():

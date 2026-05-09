@@ -18,7 +18,7 @@ from src.generation.answer_quality import clean_answer_text
 from src.utils.io import load_config, project_path, read_json, read_jsonl, write_json, write_jsonl
 
 
-CONFIG = "configs/final_eval_generator_fixed_reranker.yaml"
+CONFIG = "configs/reranker_ablation.yaml"
 
 
 def main() -> None:

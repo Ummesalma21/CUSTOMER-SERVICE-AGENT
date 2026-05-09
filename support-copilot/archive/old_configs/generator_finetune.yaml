@@ -1,0 +1,33 @@
+mode: full
+seed: 42
+device: cuda
+
+data:
+  use_all_kb_docs: true
+  max_generator_train_examples: 12000
+  max_generator_val_examples: 1000
+
+chunking:
+  max_words: 90
+  min_words: 18
+  sentence_overlap: 1
+
+generator_epochs: 1
+
+generator_training:
+  model_name: google/flan-t5-small
+  train_file: data/processed/generator_train.jsonl
+  val_file: data/processed/generator_val.jsonl
+  output_dir: outputs/generator/flan_t5
+  epochs: 1
+  batch_size: 2
+  gradient_accumulation_steps: 8
+  learning_rate: 5.0e-5
+  max_source_length: 768
+  max_target_length: 128
+  fp16: true
+  local_files_only: true
+
+# Run data prep first if generator_train.jsonl is missing:
+# .\.venv\Scripts\python.exe scripts\prepare_data.py --config configs\generator_finetune.yaml
+# .\.venv\Scripts\python.exe scripts\train_generator.py --config configs\generator_finetune.yaml
