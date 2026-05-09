@@ -337,14 +337,14 @@ Mixed workflow evaluation, 1000 examples:
 
 Honest interpretation: proposed clearly improves mixed workflow metrics over both simple RAG baselines. On answer-only retrieval, proposed improves substantially over Baseline-0 and is essentially tied with Baseline-1 on Recall@5/EvidenceHit@5. The supported-synthesis answer pass improves proposed ESA/AQS over Baseline-0, while the fine-tuned RAG ablation remains stronger on those automatic answer-only support/quality proxies.
 
-## Preference/Rubric Alignment Scores
+## Preference/Rubric Scores
 
 Output files:
 
 - `outputs/reports/preference_score_comparison.json`
 - `outputs/reports/preference_score_comparison.md`
 
-Preference/rubric alignment exists as a lightweight pairwise rubric ranker, not DPO or RLHF.
+Preference/rubric scoring exists as a lightweight pairwise rubric ranker, not a full preference-optimization method.
 
 Training artifact:
 
@@ -363,7 +363,7 @@ The scorer is implemented in `src/preference/score_candidates.py`. It rewards in
 | Mixed workflow | Baseline-1 Fine-tuned RAG | 4.5690 | 0.0140 |
 | Mixed workflow | Proposed | 3.9990 | 0.0160 |
 
-Honest interpretation: the rubric alignment step is present and trained/evaluated, but this simple scalar rubric is biased toward cited direct ANSWER strings. It does not fully capture the value of TICKET/REJECT decisions in mixed workflow settings, where the proposed system improves Macro-F1 and unsupported-answer avoidance. Therefore, preference score should be reported as an alignment component/ablation, not as the main evidence of proposed-system improvement.
+Honest interpretation: the rubric step is present and evaluated, but this simple scalar rubric is biased toward cited direct ANSWER strings. It does not fully capture the value of TICKET/REJECT decisions in mixed workflow settings, where the proposed system improves Macro-F1 and unsupported-answer avoidance. Therefore, preference score should be reported as a rubric component/ablation, not as the main evidence of proposed-system improvement.
 
 ## Official Baseline-0 vs Proposed Final Comparison
 
@@ -377,6 +377,13 @@ Output files:
 - `outputs/reports/unsupported_answer_safety_summary.md`
 - `outputs/reports/baseline0_vs_proposed_latency.json`
 - `outputs/reports/baseline0_vs_proposed_efficiency.json`
+
+Related documentation:
+
+- `ARTIFACTS.md`
+- `docs/GUARDRAILS.md`
+- `docs/SYNTHETIC_DATA.md`
+- `docs/PREFERENCE_RUBRIC.md`
 
 Baseline-0 is the official simple pretrained RAG baseline. It uses `sentence-transformers/all-MiniLM-L6-v2`, full KB search, no reranker, no routing, no triage/tool-policy, no ticketing, no rejection, no preference/rubric ranker, and always returns `ANSWER` with a citation.
 
@@ -455,6 +462,8 @@ Since Baseline-0 is a simple RAG system without ticket or reject tools, direct t
 Baseline-0 answered all 400 unsupported cases, so its unsupported-case `UnsupportedAnswerRate` is `1.0000`. Proposed answered 221 unsupported cases directly and prevented 179 of Baseline-0's unsupported answers, for an `UnsupportedAnswerPreventionRate` of `0.4475`.
 
 Baseline-1 Fine-tuned RAG remains an ablation and is not the official assignment baseline. It remains strong on answer-only extraction, but it still lacks ticket/reject tools.
+
+Answer-quality note: Proposed improves ESA/AQS over the official Baseline-0 pretrained RAG baseline. The fine-tuned RAG ablation remains stronger on extraction-style answer-only ESA/AQS, so grounded answer generation remains a limitation. ESA/AQS are automatic proxy metrics, not human evaluation.
 
 ## Final Threshold Tuning, Reranker Off
 

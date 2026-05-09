@@ -147,7 +147,7 @@ def _usable_answer_query(query: str) -> bool:
 def _synthetic_ticket_rows(n: int) -> list[dict]:
     domains = {
         "ssa": [
-            "My benefits renewal is stuck as pending for case {case_id}; can someone check my account?",
+            "My support renewal is stuck as pending for case {case_id}; can someone check my account?",
             "I submitted income documents for my SSI benefits, but the portal says manual review. What should support do next?",
             "My Social Security benefit verification letter has the wrong address. Can you update my record?",
             "The benefits portal accepted my renewal but no confirmation number appeared for account {case_id}.",
@@ -196,7 +196,7 @@ def _synthetic_ticket_rows(n: int) -> list[dict]:
 
 def _synthetic_reject_rows(n: int) -> list[dict]:
     easy = [
-        "Who won the IPL yesterday?",
+        "Who won yesterday's cricket league match?",
         "What is the weather in Mumbai tomorrow?",
         "Summarize the latest Apple stock earnings.",
         "Write me a Python script to scrape Instagram.",

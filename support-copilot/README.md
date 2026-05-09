@@ -13,6 +13,13 @@ This project builds a customer-support RAG system over MultiDoc2Dial-style suppo
 
 Structured tool calls are specified in `schemas/tool_schema.json`.
 
+Additional submission notes:
+
+- artifact and regeneration path: `ARTIFACTS.md`
+- answerability/safety guardrails: `docs/GUARDRAILS.md`
+- synthetic TICKET/REJECT data: `docs/SYNTHETIC_DATA.md`
+- preference/rubric module: `docs/PREFERENCE_RUBRIC.md`
+
 ## Setup
 
 ```powershell
@@ -109,6 +116,8 @@ Threshold ablation:
 | REE@5 | 0.1820 | 0.3947 |
 
 Final report files live in `outputs/reports/`; start with `outputs/reports/FINAL_RESULTS_FOR_REPORT.md` and `outputs/reports/REPORT_INDEX.md`.
+
+The proposed system improves ESA/AQS over the official Baseline-0 pretrained RAG baseline. The fine-tuned RAG ablation remains stronger on extraction-style answer-only ESA/AQS, so grounded generation should still be treated as a limitation. ESA/AQS are automatic proxy metrics, not human evaluation.
 
 ## Ablations
 

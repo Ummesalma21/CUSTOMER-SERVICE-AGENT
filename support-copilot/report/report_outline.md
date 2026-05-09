@@ -1,7 +1,7 @@
 # Report Outline
 
 1. Problem statement
-2. Related work: ReAct, ToolLLM, DPO, PEFT/LoRA, support RAG
+2. Related work: ReAct, ToolLLM, rubric-based ranking, PEFT/LoRA, support RAG
 3. Proposed reject-aware domain-routed RAG method
 4. Tool schema table
 5. Boundary-aware triage loss
@@ -13,4 +13,3 @@
 11. Example tool traces
 12. Limitations
 13. Future work
-

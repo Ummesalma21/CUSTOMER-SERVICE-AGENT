@@ -31,3 +31,10 @@
 - `archive/old_outputs/`: bulky prediction dumps, CSV sweeps, and per-row scored outputs.
 - `archive/old_logs/`: logs from training, debugging, and older evaluations.
 - `archive/old_runs/`: old full run snapshots.
+
+## Supporting Documentation
+
+- `ARTIFACTS.md`: included/excluded artifacts and regeneration commands.
+- `docs/GUARDRAILS.md`: answerability and safety guardrail policy.
+- `docs/SYNTHETIC_DATA.md`: synthetic TICKET/REJECT data rationale and limitations.
+- `docs/PREFERENCE_RUBRIC.md`: lightweight preference/rubric module description.

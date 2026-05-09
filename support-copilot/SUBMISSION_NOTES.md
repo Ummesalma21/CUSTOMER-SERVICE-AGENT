@@ -6,6 +6,7 @@ Include:
 
 - source code: `src/`, `scripts/`, `schemas/`, `run_all.py`, `app_streamlit.py`
 - docs: `README.md`, `DEMO_UI.md`, `SUBMISSION_NOTES.md`, `FINAL_SUBMISSION_CHECKLIST.md`
+- artifact details: `ARTIFACTS.md`
 - final configs: `configs/`
 - small processed metadata needed by routing: `data/processed/domain_centroids.json`, `data/processed/domain_keywords.json`
 - final report-facing outputs: `outputs/reports/`
@@ -87,3 +88,5 @@ Older experiments were moved to one top-level archive:
 ## Checkpoints
 
 Final inference expects local trained artifacts under `outputs/` and indexes under `data/indexes/`. These are intentionally git-ignored because they are large. If checkpoints are missing, regenerate them with the training commands above or restore them from the course artifact bundle.
+
+See `ARTIFACTS.md` for the full included/excluded artifact list and regeneration path.

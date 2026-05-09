@@ -1,0 +1,10 @@
+{
+  "Recall@1": 0.255,
+  "Recall@5": 0.437,
+  "MRR@10": 0.3230833333333331,
+  "EvidenceHit@5": 0.437,
+  "CitationPrecision": 1.0,
+  "CitationRecall": 1.0,
+  "GroundedAnswerRate": 1.0,
+  "UnsupportedClaimRate": 0.0
+}

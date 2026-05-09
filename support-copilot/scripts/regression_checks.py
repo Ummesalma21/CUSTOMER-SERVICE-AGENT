@@ -16,7 +16,7 @@ def main() -> None:
     args = parser.parse_args()
     config = load_config(args.config)
 
-    benefits = run_proposed("Can I renew my benefits online?", config)
+    benefits = run_proposed("How do online benefit renewals work?", config)
     if benefits.get("decision") != "ANSWER" or not benefits.get("citations"):
         raise SystemExit(f"benefits regression failed: expected ANSWER with citation, got {benefits}")
     evidence = " ".join(
@@ -26,10 +26,10 @@ def main() -> None:
     if not ("benefit" in evidence and ("renew" in evidence or "renewal" in evidence)):
         raise SystemExit(f"benefits regression failed: citation was not benefits/renewal evidence: {benefits}")
 
-    ipl = run_proposed("Who won the IPL yesterday?", config)
-    trace_names = [t.get("name") or t.get("tool") for t in ipl.get("tool_trace", [])]
-    if ipl.get("decision") != "REJECT" or "RejectQuery" not in trace_names:
-        raise SystemExit(f"reject regression failed: expected RejectQuery, got {ipl}")
+    ood = run_proposed("Who won yesterday's cricket league match?", config)
+    trace_names = [t.get("name") or t.get("tool") for t in ood.get("tool_trace", [])]
+    if ood.get("decision") != "REJECT" or "RejectQuery" not in trace_names:
+        raise SystemExit(f"reject regression failed: expected RejectQuery, got {ood}")
 
     print({"benefits_decision": benefits["decision"], "benefits_citation": benefits["citations"][:1], "ipl_trace": trace_names})
 

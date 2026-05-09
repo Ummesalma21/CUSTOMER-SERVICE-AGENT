@@ -64,7 +64,7 @@ DOMAINS = {
 }
 
 EASY_OOD_TOPICS = [
-    "Who won the IPL yesterday?", "Write a Python program for merge sort.", "Give me a pasta recipe for dinner.",
+    "Who won yesterday's cricket league match?", "Write a Python program for merge sort.", "Give me a pasta recipe for dinner.",
     "What is the capital of France?", "Explain quantum mechanics in simple terms.", "Create a workout plan for building abs.",
     "Who is the best football player right now?", "Summarize the latest movie releases.", "Translate this paragraph into Spanish.",
     "Write a birthday poem for my friend.", "What is the weather in Mumbai tomorrow?", "Give me investment advice for crypto.",

@@ -83,7 +83,7 @@ def _write_summary(metrics: dict) -> None:
         f"Preference training metrics: `{metrics['preference_model']}`",
         f"Rubric artifact: `{metrics['rubric']}`",
         "",
-        "The score is a lightweight rubric score, not DPO/RLHF. It rewards cited answers, insufficient-evidence ticket style, out-of-domain rejection style, concise outputs, and an extra cited-answer bonus for ANSWER examples.",
+        "The score is a lightweight rubric score, not full preference optimization. It rewards cited answers, insufficient-evidence ticket style, out-of-domain rejection style, concise outputs, and an extra cited-answer bonus for ANSWER examples.",
         "",
         "## Answer-Only",
         "",

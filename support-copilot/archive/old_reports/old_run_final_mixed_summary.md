@@ -1,0 +1,21 @@
+# Mixed Evaluation Summary
+
+Config: `configs\final_eval_balanced_triage.yaml`
+Eval file: `data/processed/eval_mixed_1000.jsonl`
+
+## Counts
+`{'total': 1000, 'TICKET': 200, 'synthetic_ticket': 200, 'ANSWER': 600, 'multidoc2dial': 600, 'REJECT': 200, 'synthetic_reject': 200}`
+
+## Baseline RAG
+`{'Tool Decision Accuracy': 0.6, 'ANSWER F1': 0.7499999999999999, 'ANSWER Precision': 0.6, 'ANSWER Recall': 1.0, 'TICKET F1': 0.0, 'TICKET Precision': 0.0, 'TICKET Recall': 0.0, 'REJECT F1': 0.0, 'REJECT Precision': 0.0, 'REJECT Recall': 0.0, 'confusion_matrix': {'ANSWER': {'ANSWER': 600, 'TICKET': 0, 'REJECT': 0}, 'TICKET': {'ANSWER': 200, 'TICKET': 0, 'REJECT': 0}, 'REJECT': {'ANSWER': 200, 'TICKET': 0, 'REJECT': 0}}, 'Macro-F1': 0.24999999999999997, 'FalseRejectRate': 0.0, 'FalseAcceptRate': 1.0, 'OODAnswerRate': 1.0, 'TicketMissRate': 1.0}`
+
+## Proposed Calibrated System
+`{'Tool Decision Accuracy': 0.693, 'ANSWER F1': 0.7724240177909563, 'ANSWER Precision': 0.6955941255006676, 'ANSWER Recall': 0.8683333333333333, 'TICKET F1': 0.615916955017301, 'TICKET Precision': 1.0, 'TICKET Recall': 0.445, 'REJECT F1': 0.4585635359116022, 'REJECT Precision': 0.5123456790123457, 'REJECT Recall': 0.415, 'confusion_matrix': {'ANSWER': {'ANSWER': 521, 'TICKET': 0, 'REJECT': 79}, 'TICKET': {'ANSWER': 111, 'TICKET': 89, 'REJECT': 0}, 'REJECT': {'ANSWER': 117, 'TICKET': 0, 'REJECT': 83}}, 'Macro-F1': 0.6156348362399532, 'FalseRejectRate': 0.09875, 'FalseAcceptRate': 0.585, 'OODAnswerRate': 0.585, 'TicketMissRate': 0.555}`
+
+## ANSWER-Only Retrieval
+Baseline: `{'Recall@5': 0.415, 'MRR@10': 0.3116666666666667, 'EvidenceHit@5': 0.415, 'CitationPrecision': 1.0}`
+Proposed: `{'Recall@5': 0.4, 'MRR@10': 0.3004444444444445, 'EvidenceHit@5': 0.4, 'CitationPrecision': 1.0}`
+
+## Notes
+Baseline RAG is answer-only, so TICKET and REJECT examples are counted as decision errors.
+This mixed evaluation does not retrain any model; it reuses the configured checkpoints and calibrated inference logic.
