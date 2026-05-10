@@ -12,7 +12,7 @@ from src.utils.io import project_path, read_json, read_jsonl, write_json
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="configs/proposed_final.yaml")
+    parser.add_argument("--config", default="configs/proposed.yaml")
     parser.add_argument("--predictions", default="outputs/reports/final_mixed_best_predictions.jsonl")
     parser.add_argument("--mixed-metrics", default="outputs/reports/final_mixed_best_metrics.json")
     args = parser.parse_args()

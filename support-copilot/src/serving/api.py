@@ -10,7 +10,7 @@ except Exception:  # pragma: no cover
 
 if FastAPI:
     app = FastAPI(title="Reject-Aware Support Copilot")
-    CONFIG = load_config("configs/proposed_final.yaml")
+    CONFIG = load_config("configs/proposed.yaml")
 
     @app.get("/health")
     def health() -> dict:

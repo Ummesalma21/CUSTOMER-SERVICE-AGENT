@@ -4,9 +4,9 @@ The final system uses a two-phase policy to decide whether to answer, escalate, 
 
 These rules are not tied to demo strings.
 
-## Phase 1: Lexical Safety Gate
+## Phase 1: Answerability Guardrail
 
-Phase 1 is a fast, interpretable guardrail. It handles only high-confidence cases:
+Phase 1 is a fast, interpretable guardrail. It uses broad support-domain signals and evidence checks to handle only high-confidence cases:
 
 - obvious out-of-domain categories such as sports, coding help, entertainment, recipes, shopping, and generic trivia
 - vague or underspecified queries with weak support-domain signal

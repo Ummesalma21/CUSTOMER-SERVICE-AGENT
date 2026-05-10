@@ -11,6 +11,8 @@ The submission ZIP is intended to include:
 - final report-facing outputs: `outputs/reports/`
 - small processed metadata when present, such as domain keywords and centroids
 
+Old experiments are kept locally under `archive/` and are excluded from the submitted ZIP/GitHub copy to keep the submission focused and reproducible.
+
 ## Not Included By Default
 
 These artifacts are excluded or should be excluded because of size:
@@ -22,6 +24,7 @@ These artifacts are excluded or should be excluded because of size:
 - FAISS/JSON indexes under `data/indexes/`
 - trained checkpoint folders under `outputs/retriever/`, `outputs/reranker/`, `outputs/triage*/`, `outputs/generator/`
 - large prediction dumps archived under `archive/old_outputs/`
+- local `archive/` experiment backups
 
 Do not assume trained checkpoints are included unless the course ZIP explicitly contains them.
 
@@ -36,9 +39,9 @@ Run from `support-copilot/` after installing requirements:
 .\.venv\Scripts\python.exe scripts\train_reranker.py --config configs\train_full.yaml
 .\.venv\Scripts\python.exe scripts\train_triage.py --config configs\train_full.yaml
 .\.venv\Scripts\python.exe scripts\build_balanced_triage_data.py
-.\.venv\Scripts\python.exe scripts\train_triage.py --config configs\triage_balanced.yaml
+.\.venv\Scripts\python.exe scripts\train_triage.py --config configs\train_triage_balanced.yaml
 .\.venv\Scripts\python.exe scripts\train_preference.py --config configs\train_full.yaml
-.\.venv\Scripts\python.exe scripts\train_generator.py --config configs\generator_fixed.yaml
+.\.venv\Scripts\python.exe scripts\train_generator.py --config configs\train_generator.yaml
 ```
 
 Expected regenerated locations:
@@ -47,7 +50,7 @@ Expected regenerated locations:
 - indexes: `data/indexes/`
 - retriever checkpoint: `outputs/retriever/`
 - reranker checkpoint: `outputs/reranker/`
-- triage checkpoints: `outputs/triage/`, `outputs/triage_balanced/`
+- triage checkpoint: `outputs/triage_balanced/`
 - preference/rubric outputs: `outputs/preference/`
 - generator/synthesis artifacts: `outputs/generator/`
 - final reports: `outputs/reports/`
@@ -57,9 +60,9 @@ Expected regenerated locations:
 If checkpoints and indexes are already present:
 
 ```powershell
-.\.venv\Scripts\python.exe scripts\demo_cli.py --query "Can I renew my benefits online?" --config configs\proposed_final.yaml
+.\.venv\Scripts\python.exe scripts\demo_cli.py --query "Can I renew my benefits online?" --config configs\proposed.yaml
 .\.venv\Scripts\python.exe -m streamlit run app_streamlit.py
-.\.venv\Scripts\python.exe scripts\evaluate_baseline0_vs_proposed.py
+.\.venv\Scripts\python.exe scripts\evaluate_baseline_vs_proposed.py
 .\.venv\Scripts\python.exe scripts\evaluate_esa_aqs.py
 .\.venv\Scripts\python.exe scripts\evaluate_unsupported_answer_safety.py
 ```

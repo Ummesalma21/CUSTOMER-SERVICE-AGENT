@@ -8,13 +8,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.evaluation.evaluate_end_to_end import run_baseline, run_proposed
-from src.evaluation.metrics import grounding_metrics, retrieval_metrics
+from src.evaluation.metrics import retrieval_metrics
 from src.utils.io import load_config, project_path, read_jsonl, write_json, write_jsonl
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="configs/proposed_final.yaml")
+    parser.add_argument("--config", default="configs/proposed.yaml")
     parser.add_argument("--eval-path", default="data/processed/eval_set.jsonl")
     parser.add_argument("--max-rows", type=int, default=0)
     args = parser.parse_args()
@@ -58,9 +58,7 @@ def main() -> None:
 
 
 def _answer_metrics(rows: list[dict], predictions: list[dict]) -> dict:
-    out = retrieval_metrics(rows, predictions, k=5)
-    out.update(grounding_metrics(predictions))
-    return out
+    return retrieval_metrics(rows, predictions, k=5)
 
 
 def _write_summary(metrics: dict) -> None:

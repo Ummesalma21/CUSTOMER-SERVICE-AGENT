@@ -29,8 +29,8 @@ PREDICTION_CANDIDATES = [
 ]
 
 DEFAULT_CONFIGS = [
-    "configs/proposed_final.yaml",
-    "configs/baseline_pretrained_rag.yaml",
+    "configs/proposed.yaml",
+    "configs/baseline.yaml",
 ]
 
 THRESHOLDS = {

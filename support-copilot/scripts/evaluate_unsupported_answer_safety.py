@@ -30,7 +30,7 @@ def compute_safety(rows: list[dict]) -> tuple[dict, list[dict]]:
     answerable = [r for r in rows if r.get("gold_decision") == "ANSWER"]
     predictions = []
     for row in rows:
-        b0 = row.get("baseline_0_pretrained_decision", "ANSWER")
+        b0 = row.get("baseline_pretrained_decision", "ANSWER")
         prop = row.get("proposed_decision", "")
         unsupported_case = row.get("gold_decision") in {"TICKET", "REJECT"}
         predictions.append(
@@ -38,7 +38,7 @@ def compute_safety(rows: list[dict]) -> tuple[dict, list[dict]]:
                 "query_id": row.get("query_id"),
                 "query": row.get("query"),
                 "gold_decision": row.get("gold_decision"),
-                "baseline_0_decision": b0,
+                "baseline_decision": b0,
                 "proposed_decision": prop,
                 "unsupported_case": unsupported_case,
                 "baseline_unsupported_answer": unsupported_case and b0 == "ANSWER",
@@ -52,13 +52,13 @@ def compute_safety(rows: list[dict]) -> tuple[dict, list[dict]]:
     metrics = {
         "unsupported_case_count": len(unsupported),
         "answerable_case_count": len(answerable),
-        "baseline_0": {
+        "baseline": {
             "UnsupportedAnswerRate": baseline_unsupported_count / max(1, len(unsupported)),
             "UnsupportedAnswerCount": baseline_unsupported_count,
             "SafeActionRate": 0.0,
-            "OODAnswerRate": _rate(rows, "REJECT", "baseline_0_pretrained_decision", "ANSWER"),
-            "TicketMissRate": _rate(rows, "TICKET", "baseline_0_pretrained_decision", "ANSWER"),
-            "FalseRejectOnAnswerableRate": _rate(rows, "ANSWER", "baseline_0_pretrained_decision", "REJECT"),
+            "OODAnswerRate": _rate(rows, "REJECT", "baseline_pretrained_decision", "ANSWER"),
+            "TicketMissRate": _rate(rows, "TICKET", "baseline_pretrained_decision", "ANSWER"),
+            "FalseRejectOnAnswerableRate": _rate(rows, "ANSWER", "baseline_pretrained_decision", "REJECT"),
         },
         "proposed": {
             "UnsupportedAnswerRate": proposed_unsupported_count / max(1, len(unsupported)),
@@ -84,17 +84,17 @@ def _rate(rows: list[dict], gold: str, pred_field: str, pred_value: str) -> floa
 
 
 def _write_summary(metrics: dict) -> None:
-    b = metrics["baseline_0"]
+    b = metrics["baseline"]
     p = metrics["proposed"]
     lines = [
         "# Unsupported Answer Safety",
         "",
-        "Since Baseline-0 is a simple RAG system without ticket or reject tools, direct triage-F1 comparison can be misleading. We therefore report unsupported-answer safety: how often a system gives a direct answer when the KB does not contain sufficient evidence, and how many such failures the proposed system prevents.",
+        "Since Baseline is a simple RAG system without ticket or reject tools, direct triage-F1 comparison can be misleading. We therefore report unsupported-answer safety: how often a system gives a direct answer when the KB does not contain sufficient evidence, and how many such failures the proposed system prevents.",
         "",
         f"Unsupported cases: `{metrics['unsupported_case_count']}`",
         f"Answerable cases: `{metrics['answerable_case_count']}`",
         "",
-        "| Metric | Baseline-0 Pretrained RAG | Proposed | Delta |",
+        "| Metric | Baseline | Proposed | Delta |",
         "|---|---:|---:|---:|",
     ]
     keys = [

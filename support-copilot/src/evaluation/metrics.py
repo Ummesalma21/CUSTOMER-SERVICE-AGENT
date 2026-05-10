@@ -22,19 +22,6 @@ def retrieval_metrics(eval_rows: list[dict], predictions: list[dict], k: int = 5
     return {"Recall@1": hit1 / total, f"Recall@{k}": hitk / total, "MRR@10": mrr / total, f"EvidenceHit@{k}": hitk / total}
 
 
-def grounding_metrics(predictions: list[dict]) -> dict:
-    answer_like = [p for p in predictions if p.get("decision") == "ANSWER"]
-    denom = max(1, len(answer_like))
-    cited = sum(1 for p in answer_like if "[doc_id=" in p.get("answer", "") or p.get("citations"))
-    supported = sum(1 for p in answer_like if p.get("citations"))
-    return {
-        "CitationPrecision": cited / denom,
-        "CitationRecall": supported / denom,
-        "GroundedAnswerRate": supported / denom,
-        "UnsupportedClaimRate": max(0.0, 1.0 - supported / denom),
-    }
-
-
 def classification_metrics(rows: list[dict], predictions: list[dict]) -> dict:
     labels = ["ANSWER", "TICKET", "REJECT"]
     total = max(1, len(rows))

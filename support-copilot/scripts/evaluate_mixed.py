@@ -10,7 +10,7 @@ from typing import Iterable
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.evaluation.evaluate_end_to_end import run_baseline, run_proposed
-from src.evaluation.metrics import grounding_metrics, retrieval_metrics
+from src.evaluation.metrics import retrieval_metrics
 from src.utils.io import load_config, project_path, read_jsonl, write_json, write_jsonl
 
 
@@ -19,7 +19,7 @@ LABELS = ["ANSWER", "TICKET", "REJECT"]
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="configs/proposed_final.yaml")
+    parser.add_argument("--config", default="configs/proposed.yaml")
     parser.add_argument("--mixed-path", default="data/processed/eval_mixed_1000.jsonl")
     parser.add_argument("--output-prefix", default=None)
     parser.add_argument("--rebuild", action="store_true")
@@ -291,7 +291,6 @@ def _answer_retrieval(rows: list[dict], predictions: list[dict]) -> dict:
     answer_predictions = [p for _, p in pairs]
     out = retrieval_metrics(answer_rows, answer_predictions, k=5)
     out.pop("Recall@1", None)
-    out.update({"CitationPrecision": grounding_metrics(answer_predictions)["CitationPrecision"]})
     return out
 
 

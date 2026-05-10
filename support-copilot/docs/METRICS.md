@@ -1,8 +1,8 @@
 # Evaluation Metrics
 
-This project evaluates three different capabilities: answer retrieval, support workflow control, and evidence-supported answer quality. The metrics below use the same definitions for Baseline-0 and the proposed system unless noted.
+This project evaluates three different capabilities: answer retrieval, support workflow control, and evidence-supported answer quality. The metrics below use the same definitions for Baseline and the proposed system unless noted.
 
-## Answer-Only Retrieval And Grounding
+## Answer-Only Retrieval
 
 These metrics are computed only on answerable MultiDoc2Dial-derived examples.
 
@@ -10,9 +10,6 @@ These metrics are computed only on answerable MultiDoc2Dial-derived examples.
 - **Recall@5**: fraction of answerable queries where the gold evidence appears in the top 5 retrieved passages.
 - **MRR@10**: mean reciprocal rank of the first correct evidence passage within the top 10.
 - **EvidenceHit@5**: fraction of answerable queries where any top-5 passage matches the expected evidence. In this project it tracks Recall@5.
-- **CitationPrecision**: fraction of emitted citations that point to a retrieved KB passage.
-- **GroundedAnswerRate**: fraction of answer outputs that include a system-attached citation.
-- **UnsupportedClaimRate**: fraction of answer outputs that contain a direct answer without an attached supporting citation.
 
 ## ESA And AQS
 
@@ -24,7 +21,7 @@ These are automatic proxy metrics for evidence support and answer formulation. T
 - **Correctness / Directness**: checks whether the answer directly addresses the user query.
 - **Trueness / Grounding**: checks whether cited evidence supports the answer.
 
-The final ESA/AQS run uses the same similarity thresholds for Baseline-0 and Proposed:
+The final ESA/AQS run uses the same similarity thresholds for Baseline and Proposed:
 
 - query-citation similarity >= `0.35`
 - answer-citation similarity >= `0.40`
@@ -46,14 +43,14 @@ These metrics are computed on `data/processed/eval_mixed_1000.jsonl`, which cont
 
 ## Unsupported-Answer Safety
 
-These metrics are used because Baseline-0 has no ticket/reject tools and always answers.
+These metrics are used because Baseline has no ticket/reject tools and always answers.
 
 - **Unsupported case**: an example whose gold decision is `TICKET` or `REJECT`.
 - **Unsupported answer**: a direct `ANSWER` on an unsupported case.
 - **UnsupportedAnswerRate**: unsupported answers divided by unsupported cases.
 - **UnsupportedAnswerCount**: number of unsupported cases directly answered.
-- **UnsupportedAnswerPreventionCount**: number of Baseline-0 unsupported answers where Proposed chooses `TICKET` or `REJECT`.
-- **UnsupportedAnswerPreventionRate**: prevention count divided by Baseline-0 unsupported answer count.
+- **UnsupportedAnswerPreventionCount**: number of Baseline unsupported answers where Proposed chooses `TICKET` or `REJECT`.
+- **UnsupportedAnswerPreventionRate**: prevention count divided by Baseline unsupported answer count.
 - **SafeActionRate**: fraction of unsupported cases predicted as `TICKET` or `REJECT`.
 - **FalseRejectOnAnswerableRate**: fraction of answerable examples predicted as `REJECT`.
 

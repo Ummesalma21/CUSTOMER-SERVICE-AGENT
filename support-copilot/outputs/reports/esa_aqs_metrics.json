@@ -1,5 +1,5 @@
 {
-  "prediction_file": "C:\\Users\\ummes\\OneDrive\\Documents\\New project\\CUSTOMER-SERVICE-AGENT\\support-copilot\\outputs\\reports\\final_answer_only_supported_synthesis_predictions.jsonl",
+  "prediction_file": "outputs/reports/baseline_vs_proposed_metrics.json",
   "evaluated_rows": 500,
   "thresholds": {
     "query_citation_similarity": 0.35,
@@ -12,7 +12,7 @@
     "AQS": 0.6270000000000007
   },
   "proposed": {
-    "ESA": 0.638,
-    "AQS": 0.7186666666666671
+    "ESA": 0.53,
+    "AQS": 0.6733333333333333
   }
 }

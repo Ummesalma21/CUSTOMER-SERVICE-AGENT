@@ -14,7 +14,7 @@ from scripts.evaluate_esa_aqs import THRESHOLDS, _correctness_score, _fluency_sc
 from scripts.evaluate_mixed import _decision_metrics
 from scripts.evaluate_grounding_mixed import _grounding_metrics
 from src.evaluation.evaluate_end_to_end import run_proposed
-from src.evaluation.metrics import grounding_metrics, retrieval_metrics
+from src.evaluation.metrics import retrieval_metrics
 from src.generation.templates import cited_answer
 from src.retrieval.search_kb import search
 from src.utils.io import load_config, project_path, read_jsonl, write_json, write_jsonl
@@ -36,12 +36,12 @@ def main() -> None:
     answer_rows = [r for r in read_jsonl(ANSWER_EVAL) if r.get("gold_chunk_id")]
     mixed_rows = read_jsonl(MIXED_EVAL)
 
-    print("Loading Baseline-0 pretrained retriever index...", flush=True)
+    print("Loading Baseline pretrained retriever index...", flush=True)
     pretrained_index = _build_st_index("sentence-transformers/all-MiniLM-L6-v2", kb_chunks)
     print("Loading Baseline-1 fine-tuned retriever index...", flush=True)
     finetuned_index = _load_finetuned_index()
 
-    print("Scoring answer-only Baseline-0 pretrained RAG...", flush=True)
+    print("Scoring answer-only Baseline...", flush=True)
     answer_pretrained = _rag_predict_many([row["query"] for row in answer_rows], pretrained_index)
     print("Scoring answer-only Baseline-1 fine-tuned RAG...", flush=True)
     answer_finetuned = _rag_predict_many([row["query"] for row in answer_rows], finetuned_index)
@@ -49,19 +49,19 @@ def main() -> None:
 
     esa_embedder = _load_esa_embedder()
     answer_metrics = {
-        "baseline_0_pretrained_rag": _answer_metrics(answer_rows, answer_pretrained, esa_embedder),
+        "baseline": _answer_metrics(answer_rows, answer_pretrained, esa_embedder),
         "baseline_1_finetuned_rag": _answer_metrics(answer_rows, answer_finetuned, esa_embedder),
         "proposed": _answer_metrics(answer_rows, answer_proposed, esa_embedder),
     }
 
-    print("Scoring mixed Baseline-0 pretrained RAG...", flush=True)
+    print("Scoring mixed Baseline...", flush=True)
     mixed_pretrained = _rag_predict_many([row["query"] for row in mixed_rows], pretrained_index)
     print("Scoring mixed Baseline-1 fine-tuned RAG...", flush=True)
     mixed_finetuned = _rag_predict_many([row["query"] for row in mixed_rows], finetuned_index)
     mixed_proposed = _load_or_run_mixed_proposed(mixed_rows)
 
     mixed_metrics = {
-        "baseline_0_pretrained_rag": _mixed_metrics(mixed_rows, mixed_pretrained),
+        "baseline": _mixed_metrics(mixed_rows, mixed_pretrained),
         "baseline_1_finetuned_rag": _mixed_metrics(mixed_rows, mixed_finetuned),
         "proposed": _mixed_metrics(mixed_rows, mixed_proposed),
     }
@@ -72,7 +72,7 @@ def main() -> None:
         "answer_rows": len(answer_rows),
         "mixed_rows": len(mixed_rows),
         "systems": {
-            "Baseline-0": "Pretrained RAG using sentence-transformers/all-MiniLM-L6-v2, full KB search, always ANSWER.",
+            "Baseline": "Simple RAG using sentence-transformers/all-MiniLM-L6-v2, full KB search, always ANSWER.",
             "Baseline-1": "Fine-tuned retriever-only RAG ablation, full KB search, always ANSWER.",
             "Proposed": "Final support copilot with routing, triage/tool-policy, ticketing, rejection, and answer validation.",
         },
@@ -81,7 +81,7 @@ def main() -> None:
         "runtime_seconds": time.perf_counter() - started,
     }
     write_json(project_path("outputs", "reports", "three_way_final_comparison.json"), metrics)
-    write_json(project_path("outputs", "reports", "baseline_pretrained_metrics.json"), _flatten_system(metrics, "baseline_0_pretrained_rag"))
+    write_json(project_path("outputs", "reports", "baseline_pretrained_metrics.json"), _flatten_system(metrics, "baseline"))
     write_json(project_path("outputs", "reports", "baseline_finetuned_metrics.json"), _flatten_system(metrics, "baseline_1_finetuned_rag"))
     _write_predictions(answer_rows, answer_pretrained, answer_finetuned, answer_proposed, "three_way_answer_only_predictions.jsonl")
     _write_predictions(mixed_rows, mixed_pretrained, mixed_finetuned, mixed_proposed, "three_way_mixed_predictions.jsonl")
@@ -235,7 +235,7 @@ def _load_or_run_answer_proposed(answer_rows: list[dict[str, Any]]) -> list[dict
             }
             for row in rows
         ]
-    config = load_config("configs/proposed_final.yaml")
+    config = load_config("configs/proposed.yaml")
     return [run_proposed(row["query"], config) for row in answer_rows]
 
 
@@ -258,20 +258,12 @@ def _load_or_run_mixed_proposed(mixed_rows: list[dict[str, Any]]) -> list[dict[s
             }
             for row in rows
         ]
-    config = load_config("configs/proposed_final.yaml")
+    config = load_config("configs/proposed.yaml")
     return [run_proposed(row["query"], config) for row in mixed_rows]
 
 
 def _answer_metrics(rows: list[dict[str, Any]], predictions: list[dict[str, Any]], embedder) -> dict[str, float]:
     out = retrieval_metrics(rows, predictions, k=5)
-    g = grounding_metrics(predictions)
-    out.update(
-        {
-            "CitationPrecision": g["CitationPrecision"],
-            "GroundedAnswerRate": g["GroundedAnswerRate"],
-            "UnsupportedClaimRate": g["UnsupportedClaimRate"],
-        }
-    )
     esa_aqs = _esa_aqs_many(rows, predictions, embedder)
     out["ESA"] = sum(1 for s in esa_aqs if s["esa_pass"]) / max(1, len(esa_aqs))
     out["AQS"] = sum(float(s["aqs"]) for s in esa_aqs) / max(1, len(esa_aqs))
@@ -426,9 +418,9 @@ def _write_predictions(rows, p0, p1, pp, filename: str) -> None:
         out.append(
             {
                 **row,
-                "baseline_0_pretrained_decision": a.get("decision"),
-                "baseline_0_pretrained_answer": a.get("answer", ""),
-                "baseline_0_pretrained_hits": a.get("hits", [])[:5],
+                "baseline_pretrained_decision": a.get("decision"),
+                "baseline_pretrained_answer": a.get("answer", ""),
+                "baseline_pretrained_hits": a.get("hits", [])[:5],
                 "baseline_1_finetuned_decision": b.get("decision"),
                 "baseline_1_finetuned_answer": b.get("answer", ""),
                 "baseline_1_finetuned_hits": b.get("hits", [])[:5],
@@ -445,7 +437,7 @@ def _write_summary(metrics: dict[str, Any]) -> None:
     answer = metrics["answer_only"]
     mixed = metrics["mixed_workflow"]
     systems = [
-        ("Baseline-0 Pretrained RAG", "baseline_0_pretrained_rag"),
+        ("Baseline", "baseline"),
         ("Baseline-1 Fine-tuned RAG", "baseline_1_finetuned_rag"),
         ("Proposed", "proposed"),
     ]
@@ -454,24 +446,23 @@ def _write_summary(metrics: dict[str, Any]) -> None:
         "",
         "## Systems",
         "",
-        "- Baseline-0: official simple RAG baseline using `sentence-transformers/all-MiniLM-L6-v2`, full KB search, no routing/reranker/triage/tools, always ANSWER.",
+        "- Baseline: official simple RAG baseline using `sentence-transformers/all-MiniLM-L6-v2`, full KB search, no routing/reranker/triage/tools, always ANSWER.",
         "- Baseline-1: fine-tuned retriever-only RAG ablation, full KB search, no routing/reranker/triage/tools, always ANSWER.",
         "- Proposed: final support copilot with domain routing, triage/tool-policy, ticketing, rejection, and grounded answer validation.",
         "",
         f"Answer-only rows: `{metrics['answer_rows']}`",
         f"Mixed workflow rows: `{metrics['mixed_rows']}`",
         "",
-        "## Answer-Only Retrieval And Grounding",
+        "## Answer-Only Retrieval",
         "",
-        "| System | Recall@1 | Recall@5 | MRR@10 | EvidenceHit@5 | CitationPrecision | GroundedAnswerRate | UnsupportedClaimRate | ESA | AQS |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| System | Recall@1 | Recall@5 | MRR@10 | EvidenceHit@5 | ESA | AQS |",
+        "|---|---:|---:|---:|---:|---:|---:|",
     ]
     for label, key in systems:
         m = answer[key]
         lines.append(
             f"| {label} | {m.get('Recall@1', 0):.4f} | {m.get('Recall@5', 0):.4f} | {m.get('MRR@10', 0):.4f} | "
-            f"{m.get('EvidenceHit@5', 0):.4f} | {m.get('CitationPrecision', 0):.4f} | {m.get('GroundedAnswerRate', 0):.4f} | "
-            f"{m.get('UnsupportedClaimRate', 0):.4f} | {m.get('ESA', 0):.4f} | {m.get('AQS', 0):.4f} |"
+            f"{m.get('EvidenceHit@5', 0):.4f} | {m.get('ESA', 0):.4f} | {m.get('AQS', 0):.4f} |"
         )
     lines.extend(
         [
@@ -495,7 +486,7 @@ def _write_summary(metrics: dict[str, Any]) -> None:
             "",
             "## Honest Reading",
             "",
-            "Baseline-0 is the official simple non-fine-tuned RAG assignment baseline. Baseline-1 is a stronger fine-tuned retriever-only ablation. If proposed improves over Baseline-0 but not over Baseline-1 on an answer-only metric, report that distinction rather than treating both baselines as the same system.",
+            "Baseline is the official simple non-fine-tuned RAG assignment baseline. Baseline-1 is a stronger fine-tuned retriever-only ablation. If proposed improves over Baseline but not over Baseline-1 on an answer-only metric, report that distinction rather than treating both baselines as the same system.",
         ]
     )
     project_path("outputs", "reports", "three_way_final_comparison.md").write_text("\n".join(lines), encoding="utf-8")

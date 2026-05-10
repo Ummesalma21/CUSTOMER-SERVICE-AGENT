@@ -10,7 +10,7 @@ Your original triage model was too answer-biased because MultiDoc2Dial mostly pr
 
 ```text
 scripts/build_balanced_triage_data.py
-configs/triage_balanced.yaml
+configs/train_triage_balanced.yaml
 scripts/run_balanced_triage_retrain.bat
 ```
 
@@ -56,7 +56,7 @@ By default, it excludes exact query overlap with `data/processed/eval_mixed_1000
 ## Retrain only triage
 
 ```bat
-.\.venv\Scripts\python.exe scripts\train_triage.py --config configs\triage_balanced.yaml
+.\.venv\Scripts\python.exe scripts\train_triage.py --config configs\train_triage_balanced.yaml
 ```
 
 Then create/update your final eval config to use:

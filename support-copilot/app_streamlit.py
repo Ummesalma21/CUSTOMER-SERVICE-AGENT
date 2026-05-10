@@ -13,9 +13,9 @@ from src.utils.io import load_config
 
 
 DEFAULT_CONFIG = (
-    "configs/proposed_final.yaml"
-    if Path("configs/proposed_final.yaml").exists()
-    else "configs/baseline_pretrained_rag.yaml"
+    "configs/proposed.yaml"
+    if Path("configs/proposed.yaml").exists()
+    else "configs/baseline.yaml"
 )
 
 

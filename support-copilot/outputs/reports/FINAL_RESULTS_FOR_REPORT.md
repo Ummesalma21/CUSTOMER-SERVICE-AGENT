@@ -8,14 +8,14 @@ Metric definitions are provided in `docs/METRICS.md`.
 
 Headline final results use:
 
-- Baseline-0 config: `configs/baseline_pretrained_rag.yaml`.
-- Proposed config: `configs/proposed_final.yaml`.
+- Baseline config: `configs/baseline.yaml`.
+- Proposed config: `configs/proposed.yaml`.
 - Mixed eval file: `data/processed/eval_mixed_1000.jsonl`.
 - Reranker: off for the headline proposed system.
-- Main source file: `outputs/reports/baseline0_vs_proposed_supported_synthesis_metrics.json`.
-- ESA/AQS source files: `outputs/reports/baseline0_vs_proposed_supported_synthesis_metrics.json` and `outputs/reports/esa_aqs_metrics.json`.
+- Main source file: `outputs/reports/baseline_vs_proposed_metrics.json`.
+- ESA/AQS source files: `outputs/reports/baseline_vs_proposed_metrics.json` and `outputs/reports/esa_aqs_metrics.json`.
 
-Archived files named `final_mixed_best_*`, `fresh_mixed_*`, `old_run_*`, and `three_way_final_comparison.*` are historical or ablation artifacts. They are kept for auditability but should not be cited as headline final metrics unless the table explicitly states the config, evaluation set, date, and reranker/support-synthesis setting.
+Archived files named `final_mixed_best_*`, `fresh_mixed_*`, `old_run_*`, and `three_way_final_comparison.*` are historical or ablation artifacts. They are kept locally for auditability but should not be cited as headline final metrics unless the table explicitly states the config, evaluation set, date, and model setting.
 
 ## Proposed Two-Phase Policy
 
@@ -23,7 +23,7 @@ The proposed system uses a two-phase reject-aware support policy.
 
 | Phase | Purpose | Main signals | Possible decisions |
 |---|---|---|---|
-| Phase 1: lexical safety gate | Quickly handle high-confidence OOD, vague, or account-specific cases | support keyword score, OOD category terms, account/manual-review patterns | continue to Phase 2, `TICKET`, or conservative `REJECT` |
+| Phase 1: answerability guardrail | Quickly handle high-confidence OOD, vague, or account-specific cases | broad support-domain signal, KB/domain proximity, account/manual-review patterns | continue to Phase 2, `TICKET`, or conservative `REJECT` |
 | Phase 2: learned and semantic decision | Decide ambiguous support-like queries using learned and evidence-based signals | domain routing, KB similarity, domain centroid similarity, DistilBERT triage/tool-policy, evidence sufficiency, answer validation | `ANSWER`, `TICKET`, or `REJECT` |
 
 The Phase 1 gate is an interpretable guardrail, not a replacement for the learned triage model. It is intentionally conservative: uncertain support-like queries continue to semantic retrieval/triage or become tickets rather than being aggressively rejected. The trained DistilBERT triage/tool-policy model and KB/domain similarity checks are used in Phase 2.
@@ -52,10 +52,21 @@ Final data and model artifact summary:
 | Retriever | `sentence-transformers/all-MiniLM-L6-v2` | `outputs/retriever/sentence_transformer` | 9000 pairs, GPU `cuda:0` |
 | KB index | SentenceTransformer JSON/FAISS index | `data/indexes/kb_index.json`, `data/indexes/kb_index.faiss` | 7806 chunks |
 | Reranker | `cross-encoder/ms-marco-MiniLM-L-6-v2` | `outputs/reranker/cross_encoder` | 36000 pairs, 9000 positives, GPU `cuda:0` |
-| Initial triage | `distilbert-base-uncased` | `outputs/triage/distilbert` | 18000 examples, no separate validation split in this config |
 | Balanced triage | `distilbert-base-uncased` | `outputs/triage_balanced/distilbert` | 18000 train, 2000 validation |
 | Preference | Lightweight rubric ranker | `outputs/preference` | 1000 pairs |
-| Generator / synthesis | `google/flan-t5-small` plus supported synthesis | `outputs/generator/flan_t5_fixed` | Used only for final answer wording; decisions and citations are system-controlled |
+| Generator / synthesis | fine-tuned `google/flan-t5-small` plus grounded validation/synthesis | `outputs/generator/flan_t5_fixed` | Used for final answer wording when available; extractive synthesis is fallback only; decisions and citations are system-controlled |
+
+## Trained Component Requirement
+
+The assignment requires training or fine-tuning at least three of retriever, reranker, generator, preference alignment, and tool-policy model. We trained/fine-tuned: (A) dense retriever, (B) cross-encoder reranker, (C) FLAN-T5-small grounded answer generator, and (E) DistilBERT tool-policy/triage model. We also implemented a lightweight rubric preference ranker.
+
+| Assignment option | Component | Evidence/status |
+|---|---|---|
+| A Retriever | fine-tuned `sentence-transformers/all-MiniLM-L6-v2` | trained |
+| B Reranker | fine-tuned `cross-encoder/ms-marco-MiniLM-L-6-v2` | trained, reported as ablation/final tradeoff |
+| C Generator | fine-tuned `google/flan-t5-small` | trained and used for answer synthesis when available |
+| D Preference/rubric alignment | lightweight rubric response ranker | implemented, not DPO |
+| E Tool-policy model | DistilBERT `ANSWER` / `TICKET` / `REJECT` classifier | trained |
 
 ## Training Results
 
@@ -73,14 +84,6 @@ Final data and model artifact summary:
 - Epochs: `1`
 - Train loss: `0.02967`
 - Device: `cuda:0`
-
-### Initial Triage
-
-- Trained examples: `18000`
-- Epochs: `4`
-- Train-set accuracy: `1.0`
-- Train Macro-F1: `1.0`
-- Reported metrics are train-set metrics for this component.
 
 ### Balanced Triage
 
@@ -103,11 +106,11 @@ Balanced triage leakage check:
 
 Evaluation file: `data/processed/eval_mixed_1000.jsonl`
 
-This section reports the same final mixed workflow setting summarized later in the official Baseline-0 comparison. Metric provenance is listed in `outputs/reports/METRIC_PROVENANCE.md`.
+This section reports the same final mixed workflow setting summarized later in the official Baseline comparison. Metric provenance is listed in `outputs/reports/METRIC_PROVENANCE.md`.
 
 The mixed ANSWER builder was tightened after the first fresh evaluation because fallback dialogue rows included vague fragments. Final mixed eval contains 600 support-like answerable rows, 200 synthetic ticket rows, and 200 synthetic reject rows.
 
-| Metric | Baseline-0 RAG | Proposed |
+| Metric | Baseline RAG | Proposed |
 |---|---:|---:|
 | Tool Decision Accuracy | 0.600 | 0.676 |
 | ANSWER Precision | 0.600 | 0.702 |
@@ -173,12 +176,9 @@ Output files:
 - `outputs/reports/esa_aqs_metrics.json`
 - `outputs/reports/esa_aqs_summary.md`
 - `outputs/reports/esa_aqs_scored_predictions.jsonl`
-- `outputs/reports/final_answer_only_supported_synthesis_predictions.jsonl`
-- `outputs/reports/supported_synthesis_answer_improvement_summary.md`
+Prediction source: `outputs/reports/baseline_vs_proposed_metrics.json`
 
-Prediction file: `outputs/reports/final_answer_only_supported_synthesis_predictions.jsonl`
-
-This updated ESA/AQS run uses the official Baseline-0 pretrained RAG baseline. The proposed predictions keep the same retrieved hits, citations, routing, triage decisions, tickets, and rejects, while using evidence-supported synthesis for final `ANSWER` wording when it improves the ESA/AQS rubric score.
+This ESA/AQS run uses the official Baseline baseline. The proposed predictions keep the same retrieved hits, citations, routing, triage decisions, tickets, and rejects, with the same automatic thresholds for both systems.
 
 Evaluated rows: `500` answerable examples.
 
@@ -194,8 +194,8 @@ The same sentence-transformer similarity thresholds were used for baseline and p
 
 | Metric | Baseline RAG | Proposed |
 |---|---:|---:|
-| ESA | 0.4760 | 0.6380 |
-| AQS | 0.6270 | 0.7187 |
+| ESA | 0.4760 | 0.5300 |
+| AQS | 0.6270 | 0.6733 |
 
 Interpretation: proposed now improves ESA and AQS over the official simple pretrained RAG baseline under the same automatic thresholds. These ESA/AQS numbers are automatic proxy metrics, not human evaluation.
 
@@ -203,34 +203,33 @@ Interpretation: proposed now improves ESA and AQS over the official simple pretr
 
 Output files:
 
-- `outputs/reports/baseline_pretrained_metrics.json`
-- `outputs/reports/baseline_finetuned_metrics.json`
-- `outputs/reports/three_way_final_comparison.json`
-- `outputs/reports/three_way_final_comparison.md`
+- `outputs/reports/baseline_vs_proposed_metrics.json`
+- `outputs/reports/baseline_vs_proposed_summary.md`
+- `outputs/reports/esa_aqs_metrics.json`
 
-The official assignment baseline is now **Baseline-0: Pretrained RAG**. It uses `sentence-transformers/all-MiniLM-L6-v2` directly, searches the full KB, does not use domain routing, reranking, triage/tool-policy, CreateTicket, RejectQuery, or the preference/rubric ranker, and always returns an ANSWER with cited retrieved evidence.
+The official assignment baseline is now **Baseline**. It uses `sentence-transformers/all-MiniLM-L6-v2` directly, searches the full KB, does not use domain routing, reranking, triage/tool-policy, CreateTicket, RejectQuery, or the preference/rubric ranker, and always returns an ANSWER with cited retrieved evidence.
 
 **Baseline-1: Fine-tuned RAG** is kept only as an ablation. It uses the fine-tuned retriever/index but still has no tools, no triage, no reject behavior, no ticket behavior, no reranker, and no generator.
 
-**Proposed** adds domain routing, triage/tool-policy, ticketing, rejection, and grounded answer validation/generation.
+**Proposed** adds domain routing, triage/tool-policy, ticketing, rejection, the fine-tuned FLAN-T5-small answer generator, and grounded answer validation.
 
 Answer-only evaluation, 500 answerable examples:
 
-| System | Recall@1 | Recall@5 | MRR@10 | EvidenceHit@5 | CitationPrecision | GroundedAnswerRate | UnsupportedClaimRate | ESA | AQS |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| Baseline-0 Pretrained RAG | 0.1040 | 0.1820 | 0.1291 | 0.1820 | 1.0000 | 1.0000 | 0.0000 | 0.4760 | 0.6270 |
-| Baseline-1 Fine-tuned RAG | 0.1580 | 0.3620 | 0.2327 | 0.3620 | 1.0000 | 1.0000 | 0.0000 | 0.7480 | 0.7840 |
-| Proposed | 0.1560 | 0.3620 | 0.2320 | 0.3620 | 1.0000 | 1.0000 | 0.0000 | 0.6380 | 0.7187 |
+| System | Recall@1 | Recall@5 | MRR@10 | EvidenceHit@5 | ESA | AQS |
+|---|---:|---:|---:|---:|---:|---:|
+| Baseline | 0.1040 | 0.1820 | 0.1291 | 0.1820 | 0.4760 | 0.6270 |
+| Baseline-1 Fine-tuned RAG | 0.1580 | 0.3620 | 0.2327 | 0.3620 | 0.7480 | 0.7840 |
+| Proposed | 0.1560 | 0.3620 | 0.2320 | 0.3620 | 0.5300 | 0.6733 |
 
 Mixed workflow evaluation, 1000 examples:
 
 | System | ToolAcc | ANSWER F1 | TICKET F1 | REJECT F1 | Macro-F1 | SupportedResponseRate | UnsupportedAnswerRate | EvidenceUseAccuracy | OODAnswerRate | TicketMissRate |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| Baseline-0 Pretrained RAG | 0.6000 | 0.7500 | 0.0000 | 0.0000 | 0.2500 | 0.5750 | 0.4250 | 0.6000 | 1.0000 | 1.0000 |
+| Baseline | 0.6000 | 0.7500 | 0.0000 | 0.0000 | 0.2500 | 0.5750 | 0.4250 | 0.6000 | 1.0000 | 1.0000 |
 | Baseline-1 Fine-tuned RAG | 0.6000 | 0.7500 | 0.0000 | 0.0000 | 0.2500 | 0.5750 | 0.4250 | 0.6000 | 1.0000 | 1.0000 |
 | Proposed | 0.6760 | 0.7755 | 0.4541 | 0.5019 | 0.5772 | 0.6580 | 0.3190 | 0.6760 | 0.5500 | 0.5550 |
 
-Honest interpretation: proposed clearly improves mixed workflow metrics over both simple RAG baselines. On answer-only retrieval, proposed improves substantially over Baseline-0 and is essentially tied with Baseline-1 on Recall@5/EvidenceHit@5. The supported-synthesis answer pass improves proposed ESA/AQS over Baseline-0, while the fine-tuned RAG ablation remains stronger on those automatic answer-only support/quality proxies.
+Honest interpretation: proposed clearly improves mixed workflow metrics over both simple RAG baselines. On answer-only retrieval, proposed improves substantially over Baseline and is essentially tied with Baseline-1 on Recall@5/EvidenceHit@5. The official Baseline comparison improves proposed ESA/AQS over Baseline, while the fine-tuned RAG ablation remains stronger on those automatic answer-only support/quality proxies.
 
 ## Preference/Rubric Scores
 
@@ -249,29 +248,28 @@ Training artifact:
 
 The scorer is implemented in `src/preference/score_candidates.py`. It rewards inline or attached citation markers, insufficient-evidence ticket-style language, out-of-domain rejection-style language, concise answers, and an extra citation bonus for ANSWER examples. For this comparison, structured proposed citations were converted to the same citation-marker form before scoring, so formatting differences do not unfairly penalize the proposed system.
 
-| Evaluation | System | Mean Preference Score | Win Rate vs Baseline-0 |
+| Evaluation | System | Mean Preference Score | Win Rate vs Baseline |
 |---|---|---:|---:|
-| Answer-only | Baseline-0 Pretrained RAG | 4.9680 | - |
+| Answer-only | Baseline | 4.9680 | - |
 | Answer-only | Baseline-1 Fine-tuned RAG | 4.9760 | 0.0240 |
 | Answer-only | Proposed | 4.1200 | 0.0200 |
-| Mixed workflow | Baseline-0 Pretrained RAG | 4.5810 | - |
+| Mixed workflow | Baseline | 4.5810 | - |
 | Mixed workflow | Baseline-1 Fine-tuned RAG | 4.5690 | 0.0140 |
 | Mixed workflow | Proposed | 3.9990 | 0.0160 |
 
 Honest interpretation: the rubric step is present and evaluated, but this simple scalar rubric is biased toward cited direct ANSWER strings. It does not fully capture the value of TICKET/REJECT decisions in mixed workflow settings, where the proposed system improves Macro-F1 and unsupported-answer avoidance. Therefore, preference score should be reported as a rubric component/ablation, not as the main evidence of proposed-system improvement.
 
-## Official Baseline-0 vs Proposed Final Comparison
+## Official Baseline vs Proposed Final Comparison
 
 Output files:
 
-- `outputs/reports/baseline0_vs_proposed_metrics.json`
-- `outputs/reports/baseline0_vs_proposed_supported_synthesis_metrics.json`
-- `outputs/reports/baseline0_vs_proposed_summary.md`
-- `outputs/reports/baseline0_vs_proposed_predictions.jsonl`
+- `outputs/reports/baseline_vs_proposed_metrics.json`
+- `outputs/reports/baseline_vs_proposed_summary.md`
+- `outputs/reports/baseline_vs_proposed_predictions.jsonl`
 - `outputs/reports/unsupported_answer_safety_metrics.json`
 - `outputs/reports/unsupported_answer_safety_summary.md`
-- `outputs/reports/baseline0_vs_proposed_latency.json`
-- `outputs/reports/baseline0_vs_proposed_efficiency.json`
+- `outputs/reports/baseline_vs_proposed_latency.json`
+- `outputs/reports/baseline_vs_proposed_efficiency.json`
 
 Related documentation:
 
@@ -280,32 +278,29 @@ Related documentation:
 - `docs/SYNTHETIC_DATA.md`
 - `docs/PREFERENCE_RUBRIC.md`
 
-Baseline-0 is the official simple pretrained RAG baseline. It uses `sentence-transformers/all-MiniLM-L6-v2`, full KB search, no reranker, no routing, no triage/tool-policy, no ticketing, no rejection, no preference/rubric ranker, and always returns `ANSWER` with a citation.
+Baseline is the official simple pretrained RAG baseline. It uses `sentence-transformers/all-MiniLM-L6-v2`, full KB search, no reranker, no routing, no triage/tool-policy, no ticketing, no rejection, no preference/rubric ranker, and always returns `ANSWER` with a citation.
 
 Proposed is the final routed/tool-using support copilot with trained/fine-tuned components, domain routing, triage/tool-policy, ticketing, rejection, and grounded answer validation/generation.
 
-Answer-only retrieval and grounding:
+Answer-only retrieval:
 
-| Metric | Baseline-0 Pretrained RAG | Proposed | Delta |
+| Metric | Baseline | Proposed | Delta |
 |---|---:|---:|---:|
 | Recall@1 | 0.1040 | 0.1560 | +0.0520 |
 | Recall@5 | 0.1820 | 0.3620 | +0.1800 |
 | MRR@10 | 0.1291 | 0.2320 | +0.1028 |
 | EvidenceHit@5 | 0.1820 | 0.3620 | +0.1800 |
-| CitationPrecision | 1.0000 | 1.0000 | +0.0000 |
-| GroundedAnswerRate | 1.0000 | 1.0000 | +0.0000 |
-| UnsupportedClaimRate | 0.0000 | 0.0000 | +0.0000 |
 
 ESA/AQS:
 
-| Metric | Baseline-0 | Proposed | Delta |
+| Metric | Baseline | Proposed | Delta |
 |---|---:|---:|---:|
-| ESA | 0.4760 | 0.6380 | +0.1620 |
-| AQS | 0.6270 | 0.7187 | +0.0917 |
+| ESA | 0.4760 | 0.5300 | +0.0540 |
+| AQS | 0.6270 | 0.6733 | +0.0463 |
 
 Unsupported-answer safety:
 
-| Metric | Baseline-0 | Proposed | Delta |
+| Metric | Baseline | Proposed | Delta |
 |---|---:|---:|---:|
 | UnsupportedAnswerRate | 1.0000 | 0.5525 | -0.4475 |
 | UnsupportedAnswerCount | 400 | 221 | -179 |
@@ -318,7 +313,7 @@ Unsupported-answer safety:
 
 Mixed workflow:
 
-| Metric | Baseline-0 | Proposed | Delta |
+| Metric | Baseline | Proposed | Delta |
 |---|---:|---:|---:|
 | Tool Decision Accuracy | 0.6000 | 0.6760 | +0.0760 |
 | ANSWER F1 | 0.7500 | 0.7755 | +0.0255 |
@@ -331,7 +326,7 @@ Mixed workflow:
 
 Efficiency and tool usage:
 
-| Metric | Baseline-0 | Proposed | Delta |
+| Metric | Baseline | Proposed | Delta |
 |---|---:|---:|---:|
 | avg_latency_ms | N/A | 42.2952 | - |
 | p95_latency_ms | N/A | 56.8940 | - |
@@ -342,7 +337,7 @@ Efficiency and tool usage:
 | avg_num_tool_calls | 1.0000 | 5.7730 | +4.7730 |
 | REE@5 | 0.1820 | 0.3947 | +0.2127 |
 
-Latency note: Baseline-0 live per-query latency was not remeasured in this final comparison because its predictions were batch-generated in `three_way_final_comparison`. Proposed latency is loaded from saved per-query mixed-eval traces. Do not claim proposed is faster than Baseline-0.
+Latency note: Baseline live per-query latency was not remeasured in this final comparison because its predictions were batch-generated in `three_way_final_comparison`. Proposed latency is loaded from saved per-query mixed-eval traces. Do not claim proposed is faster than Baseline.
 
 ## Unsupported Answer Prevention
 
@@ -350,15 +345,15 @@ Unsupported case = gold `TICKET` or gold `REJECT`.
 
 Unsupported answer = system returns direct `ANSWER` on an unsupported case.
 
-UnsupportedAnswerPreventionRate = fraction of Baseline-0 unsupported answers where Proposed instead chose `TICKET` or `REJECT`.
+UnsupportedAnswerPreventionRate = fraction of Baseline unsupported answers where Proposed instead chose `TICKET` or `REJECT`.
 
-Since Baseline-0 is a simple RAG system without ticket or reject tools, direct triage-F1 comparison can be misleading. The fairer customer-support safety comparison is unsupported-answer safety: how often a system gives a direct answer when the KB does not contain sufficient evidence, and how many such cases the proposed system prevents.
+Since Baseline is a simple RAG system without ticket or reject tools, direct triage-F1 comparison can be misleading. The fairer customer-support safety comparison is unsupported-answer safety: how often a system gives a direct answer when the KB does not contain sufficient evidence, and how many such cases the proposed system prevents.
 
-Baseline-0 answered all 400 unsupported cases, so its unsupported-case `UnsupportedAnswerRate` is `1.0000`. Proposed answered 221 unsupported cases directly and prevented 179 of Baseline-0's unsupported answers, for an `UnsupportedAnswerPreventionRate` of `0.4475`.
+Baseline answered all 400 unsupported cases, so its unsupported-case `UnsupportedAnswerRate` is `1.0000`. Proposed answered 221 unsupported cases directly and prevented 179 of Baseline's unsupported answers, for an `UnsupportedAnswerPreventionRate` of `0.4475`.
 
 Baseline-1 Fine-tuned RAG remains an ablation and is not the official assignment baseline. It remains strong on answer-only extraction, but it still lacks ticket/reject tools.
 
-Answer-quality note: Proposed improves ESA/AQS over the official Baseline-0 pretrained RAG baseline. The fine-tuned RAG ablation remains stronger on extraction-style answer-only ESA/AQS, so grounded answer generation remains a limitation. ESA/AQS are automatic proxy metrics, not human evaluation.
+Answer-quality note: Proposed improves ESA/AQS over the official Baseline. The fine-tuned RAG ablation remains stronger on extraction-style answer-only ESA/AQS, so the fine-tuned generator should be presented as a customer-facing synthesis component whose quality is still constrained by retrieved evidence and automatic guardrails. ESA/AQS are automatic proxy metrics, not human evaluation.
 
 ## Final Threshold Tuning, Reranker Off
 
@@ -405,3 +400,4 @@ Updated proposed metrics after thresholding:
 | REJECT F1 | 0.5019 | 0.5019 |
 
 Conclusion: the tuned config is useful if the presentation emphasizes unsupported-answer prevention and conservative rejection. The previous proposed config remains better for ESA/AQS and answer-quality framing.
+

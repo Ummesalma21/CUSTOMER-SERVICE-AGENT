@@ -11,7 +11,7 @@ from src.utils.io import project_path, read_json, read_jsonl, write_json
 
 
 SYSTEM_FIELDS = {
-    "baseline_0_pretrained_rag": "baseline_0_pretrained_answer",
+    "baseline": "baseline_pretrained_answer",
     "baseline_1_finetuned_rag": "baseline_1_finetuned_answer",
     "proposed": "proposed_answer",
 }
@@ -36,15 +36,15 @@ def _score_rows(rows: list[dict], gold_field: str) -> dict:
     out = {}
     for system, answer_field in SYSTEM_FIELDS.items():
         scores = []
-        wins_vs_baseline0 = 0
+        wins_vs_baseline = 0
         comparable = 0
         for row in rows:
             expected = row.get(gold_field) or "ANSWER"
             score = score_answer(_answer_for_score(row, answer_field), expected)
             scores.append(score)
-            if system != "baseline_0_pretrained_rag":
-                b0 = score_answer(_answer_for_score(row, SYSTEM_FIELDS["baseline_0_pretrained_rag"]), expected)
-                wins_vs_baseline0 += int(score > b0)
+            if system != "baseline":
+                b0 = score_answer(_answer_for_score(row, SYSTEM_FIELDS["baseline"]), expected)
+                wins_vs_baseline += int(score > b0)
                 comparable += 1
         out[system] = {
             "mean_preference_score": sum(scores) / max(1, len(scores)),
@@ -52,8 +52,8 @@ def _score_rows(rows: list[dict], gold_field: str) -> dict:
             "max_preference_score": max(scores) if scores else 0.0,
             "rows": len(scores),
         }
-        if system != "baseline_0_pretrained_rag":
-            out[system]["win_rate_vs_baseline_0"] = wins_vs_baseline0 / max(1, comparable)
+        if system != "baseline":
+            out[system]["win_rate_vs_baseline"] = wins_vs_baseline / max(1, comparable)
     return out
 
 
@@ -87,16 +87,16 @@ def _write_summary(metrics: dict) -> None:
         "",
         "## Answer-Only",
         "",
-        "| System | Mean Preference Score | Win Rate vs Baseline-0 | Rows |",
+        "| System | Mean Preference Score | Win Rate vs Baseline | Rows |",
         "|---|---:|---:|---:|",
     ]
     for label, key in [
-        ("Baseline-0 Pretrained RAG", "baseline_0_pretrained_rag"),
+        ("Baseline", "baseline"),
         ("Baseline-1 Fine-tuned RAG", "baseline_1_finetuned_rag"),
         ("Proposed", "proposed"),
     ]:
         row = metrics["answer_only"][key]
-        win = row.get("win_rate_vs_baseline_0")
+        win = row.get("win_rate_vs_baseline")
         win_text = "-" if win is None else f"{win:.4f}"
         lines.append(f"| {label} | {row['mean_preference_score']:.4f} | {win_text} | {row['rows']} |")
     lines.extend(
@@ -104,17 +104,17 @@ def _write_summary(metrics: dict) -> None:
             "",
             "## Mixed Workflow",
             "",
-            "| System | Mean Preference Score | Win Rate vs Baseline-0 | Rows |",
+            "| System | Mean Preference Score | Win Rate vs Baseline | Rows |",
             "|---|---:|---:|---:|",
         ]
     )
     for label, key in [
-        ("Baseline-0 Pretrained RAG", "baseline_0_pretrained_rag"),
+        ("Baseline", "baseline"),
         ("Baseline-1 Fine-tuned RAG", "baseline_1_finetuned_rag"),
         ("Proposed", "proposed"),
     ]:
         row = metrics["mixed_workflow"][key]
-        win = row.get("win_rate_vs_baseline_0")
+        win = row.get("win_rate_vs_baseline")
         win_text = "-" if win is None else f"{win:.4f}"
         lines.append(f"| {label} | {row['mean_preference_score']:.4f} | {win_text} | {row['rows']} |")
     project_path("outputs", "reports", "preference_score_comparison.md").write_text("\n".join(lines), encoding="utf-8")

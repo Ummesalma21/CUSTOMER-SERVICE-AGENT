@@ -2,34 +2,53 @@
 
 ## Overview
 
-This project builds a customer-support RAG system over MultiDoc2Dial-style support knowledge bases. The system retrieves cited KB evidence, routes questions to support domains, validates answerability, and chooses one support action: `ANSWER`, `TICKET`, or `REJECT`. The final claim is deliberately narrow: compared with a simple pretrained RAG baseline, the proposed system preserves answer retrieval while improving support workflow control and unsupported-answer safety.
+This project is a customer-support RAG system over a MultiDoc2Dial-style knowledge base. It answers support questions with citations, creates tickets when the issue is account-specific or lacks enough KB evidence, and rejects out-of-domain queries. The final comparison is against the official assignment baseline: a simple pretrained RAG system.
 
-## Proposed Method
+## Official Baseline
 
-The proposed system uses a **two-phase reject-aware policy**.
+**Baseline** uses:
 
-**Phase 1: lexical safety gate.** A lightweight, interpretable gate catches high-confidence cases before expensive generation: obvious out-of-domain requests, vague unsupported questions, and account-specific/manual-review support issues. This phase is conservative and is not meant to reject answerable support questions.
+- `sentence-transformers/all-MiniLM-L6-v2` directly, with no fine-tuned retriever checkpoint
+- full-KB dense search
+- always `ANSWER` with a citation from retrieved evidence
+- no reranker
+- no domain routing
+- no triage/tool-policy model
+- no `CreateTicket` or `RejectQuery`
+- no preference/rubric module
 
-**Phase 2: learned and semantic decision.** Queries that pass Phase 1 use domain routing, nearest-KB similarity, domain centroid similarity, a trained DistilBERT triage/tool-policy model, evidence sufficiency checks, and answer-quality validation. This phase chooses `ANSWER`, `TICKET`, or `REJECT` using retrieved evidence and learned support-workflow signals.
+## Proposed System
 
-The design is hybrid by intent: Phase 1 provides transparent safety guardrails, while Phase 2 provides the learned retrieval, routing, and triage behavior.
+The proposed system combines trained neural modules with lightweight answerability guardrails. Learned retrieval and triage/tool-policy models provide the main decision signals; rule-based checks are used only to prevent unsupported answers, vague-query failures, and malformed generations.
 
-## Final Systems
+The proposed system includes:
 
-- **Baseline-0 Pretrained RAG**: official assignment baseline in `configs/baseline_pretrained_rag.yaml`. It uses pretrained `sentence-transformers/all-MiniLM-L6-v2`, full KB search, no reranker, no routing, no triage/tool-policy, no ticketing, no rejection, and always returns `ANSWER` with a citation.
-- **Proposed Final System**: `configs/proposed_final.yaml`. It uses the trained retriever/index, domain routing, balanced triage/tool-policy, structured tools, conservative ticket/reject behavior, and grounded answer validation/generation. Reranker is off.
-- **Baseline-1 Fine-tuned RAG**: an ablation only. It uses the fine-tuned retriever but has no workflow tools.
-- **Safety-tuned and reranker variants**: ablations in `configs/safety_tuned_ablation.yaml` and `configs/reranker_ablation.yaml`.
+- fine-tuned dense retriever
+- trained DistilBERT `ANSWER` / `TICKET` / `REJECT` triage model
+- domain routing and KB/domain similarity checks
+- structured tools: `RouteDomain`, `SearchKB`, `GetPolicy`, `CreateTicket`, `RejectQuery`
+- trained reranker, reported as an ablation/final tradeoff rather than the headline setting
+- lightweight rubric-based preference/ranking module
+- grounded answer validation/generation with system-attached citations
 
-Structured tool calls are specified in `schemas/tool_schema.json`.
+The decision policy is two-phase:
 
-Additional submission notes:
+- **Phase 1: answerability guardrails.** Broad support-domain signals, account-specific patterns, KB proximity, centroid similarity, and evidence sufficiency checks catch high-confidence vague, unsupported, or account-specific cases.
+- **Phase 2: learned and semantic decision.** Remaining queries use domain routing, dense retrieval, DistilBERT triage/tool-policy, evidence sufficiency, and answer validation to choose `ANSWER`, `TICKET`, or `REJECT`.
 
-- artifact and regeneration path: `ARTIFACTS.md`
-- answerability/safety guardrails: `docs/GUARDRAILS.md`
-- metric definitions: `docs/METRICS.md`
-- synthetic TICKET/REJECT data: `docs/SYNTHETIC_DATA.md`
-- preference/rubric module: `docs/PREFERENCE_RUBRIC.md`
+## Trained Components
+
+The assignment requires training or fine-tuning at least three of retriever, reranker, generator, preference alignment, and tool-policy model. We trained/fine-tuned: (A) dense retriever, (B) cross-encoder reranker, (C) FLAN-T5-small grounded answer generator, and (E) DistilBERT tool-policy/triage model. We also implemented a lightweight rubric preference ranker.
+
+| Assignment option | Component | Evidence/status |
+|---|---|---|
+| A Retriever | fine-tuned `sentence-transformers/all-MiniLM-L6-v2` | trained |
+| B Reranker | fine-tuned `cross-encoder/ms-marco-MiniLM-L-6-v2` | trained, reported as ablation/final tradeoff |
+| C Generator | fine-tuned `google/flan-t5-small` | trained and used for answer synthesis when available |
+| D Preference/rubric alignment | lightweight rubric response ranker | implemented, not DPO |
+| E Tool-policy model | DistilBERT `ANSWER` / `TICKET` / `REJECT` classifier | trained |
+
+The extractive synthesizer is kept as a fallback for environments where the local generator checkpoint is unavailable or returns insufficient evidence. Tool decisions and citations remain system-controlled.
 
 ## Setup
 
@@ -45,12 +64,12 @@ Optional UI dependency:
 .\.venv\Scripts\python.exe -m pip install streamlit
 ```
 
-## Demo Commands
+## Demo
 
 CLI:
 
 ```powershell
-.\.venv\Scripts\python.exe scripts\demo_cli.py --query "Can I renew my benefits online?" --config configs\proposed_final.yaml
+.\.venv\Scripts\python.exe scripts\demo_cli.py --query "Can I renew my benefits online?" --config configs\proposed.yaml
 ```
 
 Streamlit:
@@ -61,9 +80,9 @@ Streamlit:
 
 More demo notes are in `DEMO_UI.md`.
 
-## Training And Reproduction Commands
+## Training
 
-Full pipeline:
+Full reproduction:
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\prepare_data.py --config configs\train_full.yaml
@@ -78,75 +97,84 @@ Balanced triage/tool-policy:
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\build_balanced_triage_data.py
-.\.venv\Scripts\python.exe scripts\train_triage.py --config configs\triage_balanced.yaml
+.\.venv\Scripts\python.exe scripts\train_triage.py --config configs\train_triage_balanced.yaml
 ```
 
-Generator debugging/fixed generator:
+## Evaluation
 
 ```powershell
-.\.venv\Scripts\python.exe scripts\train_generator.py --config configs\generator_fixed.yaml
-```
-
-## Evaluation Commands
-
-Official Baseline-0 vs proposed comparison:
-
-```powershell
-.\.venv\Scripts\python.exe scripts\evaluate_baseline0_vs_proposed.py
-```
-
-ESA/AQS:
-
-```powershell
+.\.venv\Scripts\python.exe scripts\evaluate_baseline_vs_proposed.py
 .\.venv\Scripts\python.exe scripts\evaluate_esa_aqs.py
-```
-
-Unsupported-answer safety:
-
-```powershell
 .\.venv\Scripts\python.exe scripts\evaluate_unsupported_answer_safety.py
 ```
 
-Threshold ablation:
-
-```powershell
-.\.venv\Scripts\python.exe scripts\tune_final_thresholds.py
-```
+Metric definitions are in `docs/METRICS.md`. Metric provenance is in `outputs/reports/METRIC_PROVENANCE.md`.
 
 ## Final Results
 
-Headline metrics are reported from one final setting: Baseline-0 `configs/baseline_pretrained_rag.yaml` versus Proposed `configs/proposed_final.yaml`, reranker off, evaluated on `data/processed/eval_mixed_1000.jsonl` and the answer-only evaluation set. The source files are `outputs/reports/baseline0_vs_proposed_supported_synthesis_metrics.json`, `outputs/reports/esa_aqs_metrics.json`, and `outputs/reports/METRIC_PROVENANCE.md`.
+### Answer-Only Retrieval
 
-Metric definitions are in `docs/METRICS.md`.
-
-| Metric | Baseline-0 Pretrained RAG | Proposed Final |
+| Metric | Baseline | Proposed |
 |---|---:|---:|
+| Recall@1 | 0.1040 | 0.1560 |
 | Recall@5 | 0.1820 | 0.3620 |
+| MRR@10 | 0.1291 | 0.2320 |
 | EvidenceHit@5 | 0.1820 | 0.3620 |
-| ESA | 0.4760 | 0.6380 |
-| AQS | 0.6270 | 0.7187 |
+
+### ESA/AQS
+
+| Metric | Baseline | Proposed |
+|---|---:|---:|
+| ESA | 0.4760 | 0.5300 |
+| AQS | 0.6270 | 0.6733 |
+
+### Unsupported-Answer Safety
+
+| Metric | Baseline | Proposed |
+|---|---:|---:|
 | UnsupportedAnswerRate | 1.0000 | 0.5525 |
 | UnsupportedAnswerPreventionRate | 0.0000 | 0.4475 |
+| SafeActionRate | 0.0000 | 0.4475 |
+| OODAnswerRate | 1.0000 | 0.5500 |
+| TicketMissRate | 1.0000 | 0.5550 |
+| FalseRejectOnAnswerableRate | 0.0000 | 0.0000 |
+
+### Mixed Workflow
+
+| Metric | Baseline | Proposed |
+|---|---:|---:|
+| Tool Decision Accuracy | 0.6000 | 0.6760 |
 | Macro-F1 | 0.2500 | 0.5772 |
+| TICKET F1 | 0.0000 | 0.4541 |
+| REJECT F1 | 0.0000 | 0.5019 |
+| SupportedResponseRate | 0.5750 | 0.6580 |
+| EvidenceUseAccuracy | 0.6000 | 0.6760 |
 | REE@5 | 0.1820 | 0.3947 |
 
-Final report files live in `outputs/reports/`; start with `outputs/reports/FINAL_RESULTS_FOR_REPORT.md` and `outputs/reports/REPORT_INDEX.md`.
-
-Metric hygiene note: older files with names such as `final_mixed_best_*`, `fresh_mixed_*`, `old_run_*`, and `three_way_final_comparison.*` are archived historical runs. They are not the headline final results unless explicitly labeled as an ablation. See `outputs/reports/METRIC_PROVENANCE.md`.
-
-The proposed system improves ESA/AQS over the official Baseline-0 pretrained RAG baseline. The fine-tuned RAG ablation remains stronger on extraction-style answer-only ESA/AQS, so grounded generation should still be treated as a limitation. ESA/AQS are automatic proxy metrics, not human evaluation.
+Compared with the official simple pretrained RAG baseline, the proposed system improves retrieval, evidence support, answer-quality proxy score, and unsupported-answer safety. Baseline-1 Fine-tuned RAG remains a strong answer-only ablation but lacks support workflow actions.
 
 ## Ablations
 
-- **Safety tuned**: trades answer-quality proxy score for stronger unsupported-answer prevention.
-- **Reranker**: evaluated as a separate workflow-safety and latency ablation.
-- **Fine-tuned RAG**: strong answer-only extraction ablation, but lacks ticket/reject workflow control.
-- **Generator / synthesis**: used as a bounded answer-formulation layer; supported synthesis improves ESA/AQS while citations remain system-attached.
+- **Baseline-1 Fine-tuned RAG**: strong on extractive answer-only ESA/AQS, but has no ticket/reject tools.
+- **Reranker-enabled proposed**: improves mixed workflow/safety tradeoffs, but adds latency and changes answer-only evidence behavior.
+- **Safety-tuned thresholds**: prevent more unsupported answers, with lower ESA/AQS and answer coverage.
+- **Generator/rechunking**: the fine-tuned FLAN-T5-small generator is used for answer wording when available; quality is still limited by retrieved evidence and automatic guardrails.
 
 ## Limitations
 
-- TICKET and REJECT examples are partly synthetic because MultiDoc2Dial mainly contains answerable turns.
-- The proposed system improves workflow and safety more than retrieval quality.
-- Reject behavior is intentionally conservative to avoid rejecting answerable support questions.
-- ESA/AQS are automatic proxy metrics, not human evaluation.
-- The archive contains intermediate experiments for auditability, but they are not the final submitted results.
+- Synthetic `TICKET` and `REJECT` labels are used because MultiDoc2Dial mainly provides answerable document-grounded turns.
+- ESA/AQS are automatic proxy metrics, not human judgment.
+- Preference alignment is lightweight rubric ranking, not DPO.
+- Rule-based guardrails are used for answerability/safety; they are not demo-specific hardcoding.
+- Fine-tuned RAG remains stronger on extractive answer-only ESA/AQS.
+- Reranker and safety-threshold variants expose tradeoffs between answer quality, latency, and safety.
+
+## Repository Layout
+
+- `configs/`: final baseline, proposed, ablation, and training configs
+- `scripts/`: training, evaluation, and demo scripts
+- `src/`: retrieval, routing, triage, generation, tools, and policy modules
+- `schemas/`: JSON tool schemas
+- `docs/`: metrics, guardrails, synthetic data, and preference/rubric notes
+- `outputs/reports/`: final report-facing metrics and summaries
+- `report/` and `slides/`: submission report/slide notes

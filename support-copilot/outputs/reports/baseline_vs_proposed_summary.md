@@ -1,31 +1,28 @@
-# Baseline-0 vs Proposed Final Comparison
+# Baseline vs Proposed Final Comparison
 
-Baseline-0 is the official simple pretrained RAG baseline. Proposed is the final routed/tool-using support copilot.
+Baseline is the official simple pretrained RAG baseline. Proposed is the final routed/tool-using support copilot.
 
-Metric provenance: headline retrieval, workflow, safety, efficiency, and tool-usage metrics come from `outputs/reports/baseline0_vs_proposed_supported_synthesis_metrics.json`. ESA/AQS use the supported-synthesis answer-text update for proposed answers; this changes answer wording only, not retrieved hits, citations, routing, tickets, or rejects. See `outputs/reports/METRIC_PROVENANCE.md`.
+Metric provenance: headline retrieval, ESA/AQS, workflow, safety, efficiency, and tool-usage metrics come from the official Baseline vs Proposed comparison. See `outputs/reports/METRIC_PROVENANCE.md`.
 
-## Table 1: Answer-Only Retrieval And Grounding
+## Table 1: Answer-Only Retrieval
 
-| Metric | Baseline-0 Pretrained RAG | Proposed | Delta |
+| Metric | Baseline | Proposed | Delta |
 |---|---:|---:|---:|
 | Recall@1 | 0.1040 | 0.1560 | +0.0520 |
 | Recall@5 | 0.1820 | 0.3620 | +0.1800 |
 | MRR@10 | 0.1291 | 0.2320 | +0.1028 |
 | EvidenceHit@5 | 0.1820 | 0.3620 | +0.1800 |
-| CitationPrecision | 1.0000 | 1.0000 | +0.0000 |
-| GroundedAnswerRate | 1.0000 | 1.0000 | +0.0000 |
-| UnsupportedClaimRate | 0.0000 | 0.0000 | +0.0000 |
 
 ## Table 2: ESA/AQS
 
-| Metric | Baseline-0 | Proposed | Delta |
+| Metric | Baseline | Proposed | Delta |
 |---|---:|---:|---:|
-| ESA | 0.4760 | 0.6380 | +0.1620 |
-| AQS | 0.6270 | 0.7187 | +0.0917 |
+| ESA | 0.4760 | 0.5300 | +0.0540 |
+| AQS | 0.6270 | 0.6733 | +0.0463 |
 
 ## Table 3: Unsupported-Answer Safety
 
-| Metric | Baseline-0 | Proposed | Delta |
+| Metric | Baseline | Proposed | Delta |
 |---|---:|---:|---:|
 | UnsupportedAnswerRate | 1.0000 | 0.5525 | -0.4475 |
 | UnsupportedAnswerCount | 400 | 221 | -179.0000 |
@@ -38,7 +35,7 @@ Metric provenance: headline retrieval, workflow, safety, efficiency, and tool-us
 
 ## Table 4: Mixed Workflow / Triage
 
-| Metric | Baseline-0 | Proposed | Delta |
+| Metric | Baseline | Proposed | Delta |
 |---|---:|---:|---:|
 | Tool Decision Accuracy | 0.6000 | 0.6760 | +0.0760 |
 | ANSWER Precision | 0.6000 | 0.7018 | +0.1018 |
@@ -61,7 +58,7 @@ Metric provenance: headline retrieval, workflow, safety, efficiency, and tool-us
 
 ## Table 5: Efficiency / Latency
 
-| Metric | Baseline-0 | Proposed | Delta |
+| Metric | Baseline | Proposed | Delta |
 |---|---:|---:|---:|
 | avg_latency_ms | N/A | 42.2952 | - |
 | p50_latency_ms | N/A | 43.2367 | - |
@@ -78,7 +75,7 @@ Metric provenance: headline retrieval, workflow, safety, efficiency, and tool-us
 
 ## Table 6: Tool Usage
 
-| Metric | Baseline-0 | Proposed |
+| Metric | Baseline | Proposed |
 |---|---:|---:|
 | RouteDomain call rate | 0.0000 | 1.0000 |
 | SearchKB call rate | 1.0000 | 0.9330 |
@@ -90,9 +87,9 @@ Metric provenance: headline retrieval, workflow, safety, efficiency, and tool-us
 ## Interpretation
 
 - Proposed improves over the official baseline on answer-only retrieval: Recall@5 and EvidenceHit@5 improve from 0.1820 to 0.3620.
-- Proposed improves ESA and AQS over the official baseline after the supported-synthesis answer-text update: ESA improves from 0.4760 to 0.6380; AQS improves from 0.6270 to 0.7187.
-- Unsupported-answer safety is the fairer comparison for ticket/reject behavior because Baseline-0 has no triage tools.
-- Baseline-0 always answers unsupported TICKET/REJECT cases, so its UnsupportedAnswerRate is 1.0 over unsupported cases.
+- Proposed improves ESA and AQS over the official baseline: ESA improves from 0.4760 to 0.5300; AQS improves from 0.6270 to 0.6733.
+- Unsupported-answer safety is the fairer comparison for ticket/reject behavior because Baseline has no triage tools.
+- Baseline always answers unsupported TICKET/REJECT cases, so its UnsupportedAnswerRate is 1.0 over unsupported cases.
 - Proposed prevents a portion of these unsupported answers by using CreateTicket or RejectQuery.
-- Latency should be read cautiously: Baseline-0 latency here is not live per-query inference timing, while proposed latency is loaded from saved traces when available.
+- Latency should be read cautiously: Baseline latency here is not live per-query inference timing, while proposed latency is loaded from saved traces when available.
 - Proposed searches a smaller fraction of the KB on average through routing, but it uses more decision/tool logic.

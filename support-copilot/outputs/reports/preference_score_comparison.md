@@ -8,16 +8,16 @@ The score is a lightweight rubric score, not DPO/RLHF. It rewards cited answers,
 
 ## Answer-Only
 
-| System | Mean Preference Score | Win Rate vs Baseline-0 | Rows |
+| System | Mean Preference Score | Win Rate vs Baseline | Rows |
 |---|---:|---:|---:|
-| Baseline-0 Pretrained RAG | 4.9680 | - | 500 |
+| Baseline | 4.9680 | - | 500 |
 | Baseline-1 Fine-tuned RAG | 4.9760 | 0.0240 | 500 |
 | Proposed | 4.1200 | 0.0200 | 500 |
 
 ## Mixed Workflow
 
-| System | Mean Preference Score | Win Rate vs Baseline-0 | Rows |
+| System | Mean Preference Score | Win Rate vs Baseline | Rows |
 |---|---:|---:|---:|
-| Baseline-0 Pretrained RAG | 4.5810 | - | 1000 |
+| Baseline | 4.5810 | - | 1000 |
 | Baseline-1 Fine-tuned RAG | 4.5690 | 0.0140 | 1000 |
 | Proposed | 3.9990 | 0.0160 | 1000 |

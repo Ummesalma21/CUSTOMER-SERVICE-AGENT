@@ -1,11 +1,11 @@
 # Unsupported Answer Safety
 
-Since Baseline-0 is a simple RAG system without ticket or reject tools, direct triage-F1 comparison can be misleading. We therefore report unsupported-answer safety: how often a system gives a direct answer when the KB does not contain sufficient evidence, and how many such cases the proposed system prevents.
+Since Baseline is a simple RAG system without ticket or reject tools, direct triage-F1 comparison can be misleading. We therefore report unsupported-answer safety: how often a system gives a direct answer when the KB does not contain sufficient evidence, and how many such cases the proposed system prevents.
 
 Unsupported cases: `400`
 Answerable cases: `600`
 
-| Metric | Baseline-0 Pretrained RAG | Proposed | Delta |
+| Metric | Baseline | Proposed | Delta |
 |---|---:|---:|---:|
 | UnsupportedAnswerRate | 1.0000 | 0.5525 | -0.4475 |
 | UnsupportedAnswerCount | 400 | 221 | -179.0000 |

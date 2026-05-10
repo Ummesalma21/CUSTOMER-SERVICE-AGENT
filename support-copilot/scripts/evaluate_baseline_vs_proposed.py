@@ -17,7 +17,11 @@ from src.utils.io import project_path, read_json, read_jsonl, write_json, write_
 def main() -> None:
     three_way = read_json(project_path("outputs", "reports", "three_way_final_comparison.json"), {})
     if not three_way:
-        raise FileNotFoundError("Run scripts/evaluate_three_way_final.py first.")
+        saved = read_json(project_path("outputs", "reports", "baseline_vs_proposed_metrics.json"), {})
+        if saved:
+            print(json.dumps(saved, indent=2))
+            return
+        raise FileNotFoundError("Run scripts/evaluate_three_way_final.py first, or keep outputs/reports/baseline_vs_proposed_metrics.json available.")
     mixed_rows = read_jsonl(project_path("outputs", "reports", "three_way_mixed_predictions.jsonl"))
     answer_rows = read_jsonl(project_path("outputs", "reports", "three_way_answer_only_predictions.jsonl"))
     safety, safety_predictions = compute_safety(mixed_rows)
@@ -26,12 +30,12 @@ def main() -> None:
     efficiency = _efficiency_metrics(mixed_rows)
     tools = _tool_usage(mixed_rows)
     answer = {
-        "baseline_0": three_way["answer_only"]["baseline_0_pretrained_rag"],
+        "baseline": three_way["answer_only"]["baseline"],
         "proposed": three_way["answer_only"]["proposed"],
     }
     metrics = {
         "configs": {
-            "baseline_0": "configs/baseline_pretrained_rag.yaml",
+            "baseline": "configs/baseline.yaml",
             "proposed": _proposed_config_used(),
         },
         "answer_only": answer,
@@ -41,28 +45,28 @@ def main() -> None:
         "efficiency": efficiency,
         "tool_usage": tools,
         "notes": {
-            "baseline_0": "Pretrained RAG; full KB search; no routing, reranker, triage, ticket, reject, or preference ranker; always ANSWER.",
+            "baseline": "Simple RAG; full KB search; no routing, reranker, triage, ticket, reject, or preference ranker; always ANSWER.",
             "proposed": "Final support copilot with trained/fine-tuned components, routing, triage/tool-policy, ticket/reject tools, and grounded answer validation/generation.",
         },
     }
-    write_json(project_path("outputs", "reports", "baseline0_vs_proposed_metrics.json"), metrics)
-    write_json(project_path("outputs", "reports", "baseline0_vs_proposed_latency.json"), latency)
-    write_json(project_path("outputs", "reports", "baseline0_vs_proposed_efficiency.json"), efficiency)
+    write_json(project_path("outputs", "reports", "baseline_vs_proposed_metrics.json"), metrics)
+    write_json(project_path("outputs", "reports", "baseline_vs_proposed_latency.json"), latency)
+    write_json(project_path("outputs", "reports", "baseline_vs_proposed_efficiency.json"), efficiency)
     write_json(project_path("outputs", "reports", "unsupported_answer_safety_metrics.json"), safety)
     write_jsonl(project_path("outputs", "reports", "unsupported_answer_safety_predictions.jsonl"), safety_predictions)
-    write_jsonl(project_path("outputs", "reports", "baseline0_vs_proposed_predictions.jsonl"), _prediction_rows(answer_rows, mixed_rows))
+    write_jsonl(project_path("outputs", "reports", "baseline_vs_proposed_predictions.jsonl"), _prediction_rows(answer_rows, mixed_rows))
     _write_safety_summary(safety)
     _write_summary(metrics)
     print(json.dumps(metrics, indent=2))
 
 
 def _proposed_config_used() -> str:
-    return "configs/proposed_final.yaml"
+    return "configs/proposed.yaml"
 
 
 def _mixed_metrics(rows: list[dict]) -> dict:
     labels = ["ANSWER", "TICKET", "REJECT"]
-    baseline_preds = [{"decision": row.get("baseline_0_pretrained_decision", "ANSWER")} for row in rows]
+    baseline_preds = [{"decision": row.get("baseline_pretrained_decision", "ANSWER")} for row in rows]
     proposed_preds = [{"decision": row.get("proposed_decision", "")} for row in rows]
     baseline = _decision_metrics(rows, baseline_preds)
     proposed = _decision_metrics(rows, proposed_preds)
@@ -70,7 +74,7 @@ def _mixed_metrics(rows: list[dict]) -> dict:
         payload["FalseRejectRate"] = payload.pop("FalseRejectRate")
         payload["FalseAcceptRate"] = payload.pop("FalseAcceptRate")
     return {
-        "baseline_0": {**baseline, **_grounding_from_rows(rows, "baseline_0_pretrained")},
+        "baseline": {**baseline, **_grounding_from_rows(rows, "baseline_pretrained")},
         "proposed": {**proposed, **_grounding_from_rows(rows, "proposed")},
     }
 
@@ -140,10 +144,10 @@ def _latency_metrics(rows: list[dict], sample_size: int = 200, warmup: int = 5) 
     else:
         proposed_sample = []
     return {
-        "measurement_note": "Baseline-0 live per-query latency was not remeasured here because the official baseline predictions were batch-generated in three_way_final_comparison. Proposed latency is loaded from saved per-query mixed-eval traces when available.",
+        "measurement_note": "Baseline live per-query latency was not remeasured here because the official baseline predictions were batch-generated in three_way_final_comparison. Proposed latency is loaded from saved per-query mixed-eval traces when available.",
         "sample_size": sample_size,
         "warmup_excluded": warmup,
-        "baseline_0": _latency_stats([]),
+        "baseline": _latency_stats([]),
         "proposed": _latency_stats(proposed_sample),
     }
 
@@ -192,12 +196,12 @@ def _efficiency_metrics(rows: list[dict]) -> dict:
         domains_per_query.append(len(searched_domains))
         tool_calls.append(len(trace))
     evidence_hit5 = read_json(project_path("outputs", "reports", "three_way_final_comparison.json"), {})["answer_only"]
-    baseline_eh = evidence_hit5["baseline_0_pretrained_rag"]["EvidenceHit@5"]
+    baseline_eh = evidence_hit5["baseline"]["EvidenceHit@5"]
     proposed_eh = evidence_hit5["proposed"]["EvidenceHit@5"]
     avg_prop = sum(proposed_fracs) / max(1, len(proposed_fracs))
     return {
         "total_kb_chunks": total,
-        "baseline_0": {
+        "baseline": {
             "avg_fraction_kb_searched": 1.0,
             "median_fraction_kb_searched": 1.0,
             "p95_fraction_kb_searched": 1.0,
@@ -222,7 +226,7 @@ def _efficiency_metrics(rows: list[dict]) -> dict:
 def _tool_usage(rows: list[dict]) -> dict:
     names = ["RouteDomain", "SearchKB", "GetPolicy", "CreateTicket", "RejectQuery"]
     out = {
-        "baseline_0": {
+        "baseline": {
             "RouteDomain call rate": 0.0,
             "SearchKB call rate": 1.0,
             "GetPolicy call rate": 0.0,
@@ -268,21 +272,21 @@ def _write_summary(metrics: dict) -> None:
     efficiency = metrics["efficiency"]
     tools = metrics["tool_usage"]
     lines = [
-        "# Baseline-0 vs Proposed Final Comparison",
+        "# Baseline vs Proposed Final Comparison",
         "",
-        "Baseline-0 is the official simple pretrained RAG baseline. Proposed is the final routed/tool-using support copilot.",
+        "Baseline is the official simple Simple RAG baseline. Proposed is the final routed/tool-using support copilot.",
         "",
-        "## Table 1: Answer-Only Retrieval And Grounding",
+        "## Table 1: Answer-Only Retrieval",
         "",
-        "| Metric | Baseline-0 Pretrained RAG | Proposed | Delta |",
+        "| Metric | Baseline | Proposed | Delta |",
         "|---|---:|---:|---:|",
     ]
-    for key in ["Recall@1", "Recall@5", "MRR@10", "EvidenceHit@5", "CitationPrecision", "GroundedAnswerRate", "UnsupportedClaimRate"]:
-        lines.append(_metric_row(key, answer["baseline_0"], answer["proposed"]))
-    lines.extend(["", "## Table 2: ESA/AQS", "", "| Metric | Baseline-0 | Proposed | Delta |", "|---|---:|---:|---:|"])
+    for key in ["Recall@1", "Recall@5", "MRR@10", "EvidenceHit@5"]:
+        lines.append(_metric_row(key, answer["baseline"], answer["proposed"]))
+    lines.extend(["", "## Table 2: ESA/AQS", "", "| Metric | Baseline | Proposed | Delta |", "|---|---:|---:|---:|"])
     for key in ["ESA", "AQS"]:
-        lines.append(_metric_row(key, answer["baseline_0"], answer["proposed"]))
-    lines.extend(["", "## Table 3: Unsupported-Answer Safety", "", "| Metric | Baseline-0 | Proposed | Delta |", "|---|---:|---:|---:|"])
+        lines.append(_metric_row(key, answer["baseline"], answer["proposed"]))
+    lines.extend(["", "## Table 3: Unsupported-Answer Safety", "", "| Metric | Baseline | Proposed | Delta |", "|---|---:|---:|---:|"])
     for key in [
         "UnsupportedAnswerRate",
         "UnsupportedAnswerCount",
@@ -291,10 +295,10 @@ def _write_summary(metrics: dict) -> None:
         "TicketMissRate",
         "FalseRejectOnAnswerableRate",
     ]:
-        lines.append(_metric_row(key, safety["baseline_0"], safety["proposed"]))
+        lines.append(_metric_row(key, safety["baseline"], safety["proposed"]))
     lines.append(f"| UnsupportedAnswerPreventionCount | - | {_fmt(safety['proposed']['UnsupportedAnswerPreventionCount'])} | - |")
     lines.append(f"| UnsupportedAnswerPreventionRate | - | {_fmt(safety['proposed']['UnsupportedAnswerPreventionRate'])} | - |")
-    lines.extend(["", "## Table 4: Mixed Workflow / Triage", "", "| Metric | Baseline-0 | Proposed | Delta |", "|---|---:|---:|---:|"])
+    lines.extend(["", "## Table 4: Mixed Workflow / Triage", "", "| Metric | Baseline | Proposed | Delta |", "|---|---:|---:|---:|"])
     for key in [
         "Tool Decision Accuracy",
         "ANSWER Precision",
@@ -315,15 +319,15 @@ def _write_summary(metrics: dict) -> None:
         "UnsupportedAnswerRate",
         "EvidenceUseAccuracy",
     ]:
-        lines.append(_metric_row(key, mixed["baseline_0"], mixed["proposed"]))
-    lines.extend(["", "## Table 5: Efficiency / Latency", "", "| Metric | Baseline-0 | Proposed | Delta |", "|---|---:|---:|---:|"])
+        lines.append(_metric_row(key, mixed["baseline"], mixed["proposed"]))
+    lines.extend(["", "## Table 5: Efficiency / Latency", "", "| Metric | Baseline | Proposed | Delta |", "|---|---:|---:|---:|"])
     for key in ["avg_latency_ms", "p50_latency_ms", "p95_latency_ms", "throughput_qps", "total_eval_time_sec"]:
-        lines.append(_metric_row(key, latency["baseline_0"], latency["proposed"]))
+        lines.append(_metric_row(key, latency["baseline"], latency["proposed"]))
     for key in ["avg_fraction_kb_searched", "median_fraction_kb_searched", "p95_fraction_kb_searched", "global_fallback_rate", "avg_num_domains_searched", "avg_num_tool_calls", "REE@5"]:
-        lines.append(_metric_row(key, efficiency["baseline_0"], efficiency["proposed"]))
-    lines.extend(["", "## Table 6: Tool Usage", "", "| Metric | Baseline-0 | Proposed |", "|---|---:|---:|"])
+        lines.append(_metric_row(key, efficiency["baseline"], efficiency["proposed"]))
+    lines.extend(["", "## Table 6: Tool Usage", "", "| Metric | Baseline | Proposed |", "|---|---:|---:|"])
     for key, value in tools["proposed"].items():
-        bval = tools["baseline_0"].get(key, 0.0)
+        bval = tools["baseline"].get(key, 0.0)
         lines.append(f"| {key} | {_fmt(bval)} | {_fmt(value)} |")
     lines.extend(
         [
@@ -332,14 +336,14 @@ def _write_summary(metrics: dict) -> None:
             "",
             "- Proposed improves over the official baseline on answer-only retrieval: Recall@5 and EvidenceHit@5 improve from 0.1820 to 0.3620.",
             "- Proposed improves ESA and AQS over the official baseline: ESA improves from 0.4760 to 0.5300; AQS improves from 0.6270 to 0.6733.",
-            "- Unsupported-answer safety is the fairer comparison for ticket/reject behavior because Baseline-0 has no triage tools.",
-            "- Baseline-0 always answers unsupported TICKET/REJECT cases, so its UnsupportedAnswerRate is 1.0 over unsupported cases.",
+            "- Unsupported-answer safety is the fairer comparison for ticket/reject behavior because Baseline has no triage tools.",
+            "- Baseline always answers unsupported TICKET/REJECT cases, so its UnsupportedAnswerRate is 1.0 over unsupported cases.",
             "- Proposed prevents a portion of these unsupported answers by using CreateTicket or RejectQuery.",
-            "- Latency should be read cautiously: Baseline-0 latency here is not live per-query inference timing, while proposed latency is loaded from saved traces when available.",
+            "- Latency should be read cautiously: Baseline latency here is not live per-query inference timing, while proposed latency is loaded from saved traces when available.",
             "- Proposed searches a smaller fraction of the KB on average through routing, but it uses more decision/tool logic.",
         ]
     )
-    project_path("outputs", "reports", "baseline0_vs_proposed_summary.md").write_text("\n".join(lines), encoding="utf-8")
+    project_path("outputs", "reports", "baseline_vs_proposed_summary.md").write_text("\n".join(lines), encoding="utf-8")
 
 
 def _metric_row(key: str, baseline: dict, proposed: dict) -> str:

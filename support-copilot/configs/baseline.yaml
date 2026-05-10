@@ -1,12 +1,12 @@
-mode: baseline_finetuned_rag
+mode: baseline
 seed: 42
 device: cuda
 
-description: "Fine-tuned retriever-only RAG ablation: no workflow tools."
+description: "Official assignment baseline: simple non-fine-tuned RAG."
 
-retriever_model_name: outputs/retriever/sentence_transformer
-retriever_checkpoint: outputs/retriever/sentence_transformer
-use_finetuned_retriever: true
+retriever_model_name: sentence-transformers/all-MiniLM-L6-v2
+retriever_checkpoint: null
+use_finetuned_retriever: false
 
 baseline:
   always_answer: true

@@ -12,12 +12,12 @@ If Streamlit is not installed:
 .\.venv\Scripts\python.exe -m pip install streamlit
 ```
 
-The UI uses `configs/proposed_final.yaml` by default. It only runs one-query inference. It does not train, evaluate, or modify checkpoints.
+The UI uses `configs/proposed.yaml` by default. It only runs one-query inference. It does not train, evaluate, or modify checkpoints.
 
 The CLI demo remains available:
 
 ```powershell
-.\.venv\Scripts\python.exe scripts\demo_cli.py --query "Can I renew my benefits online?" --config configs\proposed_final.yaml
+.\.venv\Scripts\python.exe scripts\demo_cli.py --query "Can I renew my benefits online?" --config configs\proposed.yaml
 ```
 
 Example queries:

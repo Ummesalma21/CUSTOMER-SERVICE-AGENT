@@ -1,6 +1,0 @@
-{
-  "source": "outputs/reports/final_mixed_best_metrics.json",
-  "avg_ms": 49.87855939869769,
-  "p95_ms": 62.8000998403877,
-  "qps": 20.048694510333224
-}

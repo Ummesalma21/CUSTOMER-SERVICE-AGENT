@@ -1,7 +1,7 @@
 {
   "unsupported_case_count": 400,
   "answerable_case_count": 600,
-  "baseline_0": {
+  "baseline": {
     "UnsupportedAnswerRate": 1.0,
     "UnsupportedAnswerCount": 400,
     "SafeActionRate": 0.0,

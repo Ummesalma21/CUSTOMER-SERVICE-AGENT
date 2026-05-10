@@ -1,17 +1,14 @@
 {
   "configs": {
-    "baseline_0": "configs/baseline_pretrained_rag.yaml",
-    "proposed": "configs/final_eval_generator_fixed.yaml"
+    "baseline": "configs/baseline.yaml",
+    "proposed": "configs/proposed.yaml"
   },
   "answer_only": {
-    "baseline_0": {
+    "baseline": {
       "Recall@1": 0.104,
       "Recall@5": 0.182,
       "MRR@10": 0.12913333333333335,
       "EvidenceHit@5": 0.182,
-      "CitationPrecision": 1.0,
-      "GroundedAnswerRate": 1.0,
-      "UnsupportedClaimRate": 0.0,
       "ESA": 0.476,
       "AQS": 0.6270000000000007
     },
@@ -20,15 +17,12 @@
       "Recall@5": 0.362,
       "MRR@10": 0.23196666666666663,
       "EvidenceHit@5": 0.362,
-      "CitationPrecision": 1.0,
-      "GroundedAnswerRate": 1.0,
-      "UnsupportedClaimRate": 0.0,
       "ESA": 0.53,
       "AQS": 0.6733333333333333
     }
   },
   "mixed_workflow": {
-    "baseline_0": {
+    "baseline": {
       "Tool Decision Accuracy": 0.6,
       "ANSWER F1": 0.7499999999999999,
       "ANSWER Precision": 0.6,
@@ -106,7 +100,7 @@
   "unsupported_answer_safety": {
     "unsupported_case_count": 400,
     "answerable_case_count": 600,
-    "baseline_0": {
+    "baseline": {
       "UnsupportedAnswerRate": 1.0,
       "UnsupportedAnswerCount": 400,
       "SafeActionRate": 0.0,
@@ -126,10 +120,10 @@
     }
   },
   "latency": {
-    "measurement_note": "Baseline-0 live per-query latency was not remeasured here because the official baseline predictions were batch-generated in three_way_final_comparison. Proposed latency is loaded from saved per-query mixed-eval traces when available.",
+    "measurement_note": "Baseline live per-query latency was not remeasured here because the official baseline predictions were batch-generated in three_way_final_comparison. Proposed latency is loaded from saved per-query mixed-eval traces when available.",
     "sample_size": 200,
     "warmup_excluded": 5,
-    "baseline_0": {
+    "baseline": {
       "avg_latency_ms": null,
       "p50_latency_ms": null,
       "p95_latency_ms": null,
@@ -146,7 +140,7 @@
   },
   "efficiency": {
     "total_kb_chunks": 7806,
-    "baseline_0": {
+    "baseline": {
       "avg_fraction_kb_searched": 1.0,
       "median_fraction_kb_searched": 1.0,
       "p95_fraction_kb_searched": 1.0,
@@ -167,7 +161,7 @@
     }
   },
   "tool_usage": {
-    "baseline_0": {
+    "baseline": {
       "RouteDomain call rate": 0.0,
       "SearchKB call rate": 1.0,
       "GetPolicy call rate": 0.0,
@@ -186,7 +180,7 @@
     "convention": "SearchKB is counted as a retrieval operation for both systems; RouteDomain, GetPolicy, CreateTicket, and RejectQuery are tool-policy calls."
   },
   "notes": {
-    "baseline_0": "Pretrained RAG; full KB search; no routing, reranker, triage, ticket, reject, or preference ranker; always ANSWER.",
+    "baseline": "Simple RAG; full KB search; no routing, reranker, triage, ticket, reject, or preference ranker; always ANSWER.",
     "proposed": "Final support copilot with trained/fine-tuned components, routing, triage/tool-policy, ticket/reject tools, and grounded answer validation/generation."
   }
 }
