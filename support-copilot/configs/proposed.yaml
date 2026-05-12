@@ -5,18 +5,27 @@ device: cuda
 data:
   max_eval_queries: 1000
 
-routing:
-  top_k_domains: 3
-  fallback_to_global_search: true
-  fallback_score_threshold: 0.75
+top_k_domains: 2
+top_k_retrieval: 20
+top_k_rerank: 5
+max_rerank_candidates: 15
+use_reranker: false
+tau_chunk: 0.3
+fp16: false
 
-triage:
-  checkpoint: outputs/triage_balanced/distilbert
-  reject_threshold: 0.3
-  nearest_kb_similarity_threshold: 0.3
-  centroid_similarity_threshold: 0.25
-  reject_require_lexical_low: true
-  ticket_threshold: 0.4
+domain_router:
+  enabled: true
+  mode: evidence_supervised
+  model_path: outputs/domain_router/model.pkl
+  selected_thresholds_path: outputs/domain_router/selected_thresholds.json
+  routing_strategy: primary_domain_with_global_fallback
+  top_k_domains: 2
+  min_router_confidence: 0.7
+  min_candidate_similarity: 0.4
+  min_cluster_candidates: 5
+  enable_global_fallback: true
+  fallback_merge_mode: merge
+  rerank_after_merge: true
 
 generation:
   enabled: true
@@ -36,11 +45,3 @@ answer_quality:
   strip_inline_citations: true
   deduplicate_citations: true
   reject_vague_queries: true
-
-top_k_retrieval: 20
-top_k_rerank: 5
-max_rerank_candidates: 15
-use_reranker: false
-tau_domain: 0.35
-tau_chunk: 0.3
-fp16: false

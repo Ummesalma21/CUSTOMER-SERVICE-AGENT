@@ -1,0 +1,55 @@
+{
+  "answer_only": {
+    "Recall@1": 0.104,
+    "Recall@5": 0.182,
+    "MRR@10": 0.12913333333333335,
+    "EvidenceHit@5": 0.182,
+    "ESA": 0.476,
+    "AQS": 0.6270000000000007
+  },
+  "mixed_workflow": {
+    "Tool Decision Accuracy": 0.6,
+    "ANSWER F1": 0.7499999999999999,
+    "ANSWER Precision": 0.6,
+    "ANSWER Recall": 1.0,
+    "TICKET F1": 0.0,
+    "TICKET Precision": 0.0,
+    "TICKET Recall": 0.0,
+    "REJECT F1": 0.0,
+    "REJECT Precision": 0.0,
+    "REJECT Recall": 0.0,
+    "confusion_matrix": {
+      "ANSWER": {
+        "ANSWER": 600,
+        "TICKET": 0,
+        "REJECT": 0
+      },
+      "TICKET": {
+        "ANSWER": 200,
+        "TICKET": 0,
+        "REJECT": 0
+      },
+      "REJECT": {
+        "ANSWER": 200,
+        "TICKET": 0,
+        "REJECT": 0
+      }
+    },
+    "Macro-F1": 0.24999999999999997,
+    "OODAnswerRate": 1.0,
+    "TicketMissRate": 1.0,
+    "FalseRejectRate": 0.0,
+    "FalseAcceptRate": 1.0,
+    "SupportedResponseRate": 0.575,
+    "UnsupportedAnswerRate": 0.425,
+    "EvidenceUseAccuracy": 0.6
+  },
+  "unsupported_answer_safety": {
+    "UnsupportedAnswerRate": 1.0,
+    "UnsupportedAnswerCount": 400,
+    "SafeActionRate": 0.0,
+    "OODAnswerRate": 1.0,
+    "TicketMissRate": 1.0,
+    "FalseRejectOnAnswerableRate": 0.0
+  }
+}

@@ -11,9 +11,9 @@ from src.policy.answerability import should_ticket as policy_should_ticket
 from src.preference.score_candidates import choose_best
 from src.reranking.rerank import rerank
 from src.retrieval.search_kb import search
+from src.routing.domain_router import retrieve_primary_domains, route_query
 from src.routing.router import fraction_scanned
 from src.tools.executor import ToolExecutor
-from src.triage.predict import predict_triage
 
 
 def run_baseline(query: str, config: dict) -> dict:
@@ -25,64 +25,62 @@ def run_baseline(query: str, config: dict) -> dict:
 def run_proposed(query: str, config: dict) -> dict:
     start = time.perf_counter()
     ex = ToolExecutor()
-    route = ex.call("RouteDomain", query=query, top_k_domains=int(config.get("top_k_domains", 2)))
-    domains = route.get("domains", [])
-    routed_domains = [d["domain"] for d in domains[: int(config.get("top_k_domains", 2))]]
+    routed = route_query(query, None, config)
+    routed_domains = routed.get("kb_domains", [])
     top_domain = routed_domains[0] if routed_domains else None
-    triage = predict_triage(query, config)
-    max_centroid = domains[0]["centroid_similarity"] if domains else 0.0
-    lexical_gate = route.get("lexical_gate", {})
-    lexical_low = (not lexical_gate.get("pass", False)) and int(lexical_gate.get("match_count", 0)) == 0
-    global_probe = search(query, top_k=1)
-    nearest_kb_similarity = float(global_probe[0]["score"]) if global_probe else 0.0
-    if is_vague_query(query, max_centroid=max_centroid, nearest_kb_similarity=nearest_kb_similarity):
+    action = (routed.get("action") or {}).get("label", "ANSWER")
+    action_confidence = float((routed.get("action") or {}).get("confidence", 0.0))
+
+    primary_hits, retrieval_info = retrieve_primary_domains(query, routed, config)
+    hits: list[dict] = list(primary_hits)
+    if retrieval_info.get("fallback_triggered", False):
+        global_hits = ex.call("SearchKB", query=query, top_k=int(config.get("top_k_retrieval", 20)), domain=None)
+        hits = _merge_hits(hits + list(global_hits.get("passages", [])))
+    else:
+        for domain in routed_domains:
+            domain_hits = ex.call("SearchKB", query=query, top_k=int(config.get("top_k_retrieval", 20)), domain=domain)
+            hits = _merge_hits(hits + list(domain_hits.get("passages", [])))
+
+    nearest_kb_similarity = float(hits[0]["score"]) if hits else 0.0
+    if is_vague_query(query, max_centroid=action_confidence, nearest_kb_similarity=nearest_kb_similarity):
         ret = ex.call(
             "RejectQuery",
             reason="underspecified_or_out_of_scope",
             nearest_kb_distance=1.0 - nearest_kb_similarity,
-            nearest_centroid_distance=1.0 - max_centroid,
+            nearest_centroid_distance=1.0 - action_confidence,
             confidence=1.0,
         )
-        return _pack(query, "REJECT", ret["message"], [], [], ex.traces, triage, start, domains)
-    ticket_like = _ticket_like_support_issue(query, lexical_gate, max_centroid, config)
-    triage["label"] = _apply_triage_thresholds(query, triage, lexical_gate, max_centroid, nearest_kb_similarity, config)
-    if triage["label"] == "REJECT":
+        return _pack(query, "REJECT", ret["message"], [], [], ex.traces, {"label": "REJECT", "margin": action_confidence}, start, [], router_info=routed, retrieval_info=retrieval_info)
+
+    if action == "REJECT":
         ret = ex.call(
             "RejectQuery",
             reason="out_of_domain",
             nearest_kb_distance=1.0 - nearest_kb_similarity,
-            nearest_centroid_distance=1.0 - max_centroid,
-            confidence=min(1.0, max(0.0, triage.get("margin", 0.0))),
+            nearest_centroid_distance=1.0 - action_confidence,
+            confidence=action_confidence,
         )
-        return _pack(query, "REJECT", ret["message"], [], [], ex.traces, triage, start, domains)
-    hits: list[dict] = []
-    seen: set[str] = set()
-    for domain in routed_domains:
-        search_result = ex.call("SearchKB", query=query, top_k=int(config.get("top_k_retrieval", 5)), domain=domain)
-        for passage in search_result["passages"]:
-            if passage["chunk_id"] not in seen:
-                hits.append(passage)
-                seen.add(passage["chunk_id"])
-    hits.sort(key=lambda h: h["score"], reverse=True)
-    routed_best = float(hits[0]["score"]) if hits else 0.0
-    if bool(config.get("fallback_to_global_search", False)) and routed_best < float(config.get("fallback_score_threshold", 0.30)):
-        global_hits = ex.call("SearchKB", query=query, top_k=int(config.get("top_k_retrieval", 5)), domain=None)
-        for passage in global_hits["passages"]:
-            if passage["chunk_id"] not in seen:
-                hits.append(passage)
-                seen.add(passage["chunk_id"])
-        hits.sort(key=lambda h: h["score"], reverse=True)
+        return _pack(query, "REJECT", ret["message"], [], [], ex.traces, {"label": "REJECT", "margin": action_confidence}, start, [], router_info=routed, retrieval_info=retrieval_info)
+
+    if action == "TICKET":
+        category = _ticket_category(query, top_domain)
+        ticket = ex.call("CreateTicket", summary=query, category=category, severity="medium")
+        return _pack(query, "TICKET", ticket_answer(ticket, category), hits, [], ex.traces, {"label": "TICKET", "margin": action_confidence}, start, [], router_info=routed, retrieval_info=retrieval_info)
+
     max_rerank_candidates = int(config.get("max_rerank_candidates", 0) or 0)
     if max_rerank_candidates > 0 and len(hits) > max_rerank_candidates:
         hits = sorted(hits, key=lambda h: h["score"], reverse=True)[:max_rerank_candidates]
-    if bool(config.get("use_reranker", True)):
+    rerank_after_merge = bool(_nested(config, "domain_router", "rerank_after_merge", True))
+    if rerank_after_merge and bool(config.get("use_reranker", False)):
         hits = rerank(query, hits, top_k=int(config.get("top_k_rerank", 5)))
     else:
-        hits = sorted(hits, key=lambda h: h["score"], reverse=True)[: int(config.get("top_k_rerank", 5))]
-    if (triage["label"] == "TICKET" and ticket_like) or not hits or hits[0]["score"] < float(config.get("tau_chunk", 0.30)):
+        hits = sorted(hits, key=lambda h: h["score"], reverse=True)[:int(config.get("top_k_rerank", 5))]
+
+    if not hits or hits[0]["score"] < float(config.get("tau_chunk", 0.30)):
         category = _ticket_category(query, top_domain)
         ticket = ex.call("CreateTicket", summary=query, category=category, severity="medium")
-        return _pack(query, "TICKET", ticket_answer(ticket, category), hits, [], ex.traces, triage, start, domains)
+        return _pack(query, "TICKET", ticket_answer(ticket, category), hits, [], ex.traces, {"label": "TICKET", "margin": action_confidence}, start, [], router_info=routed, retrieval_info=retrieval_info)
+
     if hits:
         ex.call("GetPolicy", doc_id=hits[0]["doc_id"], section_id=hits[0]["section_id"])
     answer_result = _grounded_answer(query, hits, config)
@@ -90,30 +88,30 @@ def run_proposed(query: str, config: dict) -> dict:
         if is_support_like(query) or (hits and float(hits[0].get("score", 0.0)) >= float(config.get("tau_chunk", 0.30))):
             category = _ticket_category(query, top_domain)
             ticket = ex.call("CreateTicket", summary=query, category=category, severity="medium")
-            return _pack(query, "TICKET", ticket_answer(ticket, category), hits, [], ex.traces, triage, start, domains)
+            return _pack(query, "TICKET", ticket_answer(ticket, category), hits, [], ex.traces, {"label": "TICKET", "margin": action_confidence}, start, [], router_info=routed, retrieval_info=retrieval_info)
         ret = ex.call(
             "RejectQuery",
             reason="unsupported_domain",
             nearest_kb_distance=1.0 - nearest_kb_similarity,
-            nearest_centroid_distance=1.0 - max_centroid,
+            nearest_centroid_distance=1.0 - action_confidence,
             confidence=0.7,
         )
-        return _pack(query, "REJECT", ret["message"], [], [], ex.traces, triage, start, domains)
+        return _pack(query, "REJECT", ret["message"], [], [], ex.traces, {"label": "REJECT", "margin": action_confidence}, start, [], router_info=routed, retrieval_info=retrieval_info)
     citations = hits[:1]
     validation = validate_answer(answer_result["answer"] or "", query, citations, int(_nested(config, "answer_quality", "min_answer_words", 6)))
     if not validation["valid"]:
         if validation["support_like"] or (hits and float(hits[0].get("score", 0.0)) >= float(config.get("tau_chunk", 0.30))):
             category = _ticket_category(query, top_domain)
             ticket = ex.call("CreateTicket", summary=query, category=category, severity="medium")
-            return _pack(query, "TICKET", ticket_answer(ticket, category), hits, [], ex.traces, triage, start, domains)
+            return _pack(query, "TICKET", ticket_answer(ticket, category), hits, [], ex.traces, {"label": "TICKET", "margin": action_confidence}, start, [], router_info=routed, retrieval_info=retrieval_info)
         ret = ex.call(
             "RejectQuery",
             reason="underspecified_or_out_of_scope",
             nearest_kb_distance=1.0 - nearest_kb_similarity,
-            nearest_centroid_distance=1.0 - max_centroid,
+            nearest_centroid_distance=1.0 - action_confidence,
             confidence=0.8,
         )
-        return _pack(query, "REJECT", ret["message"], [], [], ex.traces, triage, start, domains)
+        return _pack(query, "REJECT", ret["message"], [], [], ex.traces, {"label": "REJECT", "margin": action_confidence}, start, [], router_info=routed, retrieval_info=retrieval_info)
     return _pack(
         query,
         "ANSWER",
@@ -121,11 +119,25 @@ def run_proposed(query: str, config: dict) -> dict:
         hits,
         validation["citations"],
         ex.traces,
-        triage,
+        {"label": "ANSWER", "margin": action_confidence},
         start,
-        domains,
+        [],
         generator_info=answer_result,
+        router_info=routed,
+        retrieval_info=retrieval_info,
     )
+
+
+def _merge_hits(rows: list[dict]) -> list[dict]:
+    seen = set()
+    out = []
+    for hit in sorted(rows, key=lambda r: r.get("score", 0.0), reverse=True):
+        key = hit.get("chunk_id")
+        if key in seen:
+            continue
+        out.append(hit)
+        seen.add(key)
+    return out
 
 
 def _ticket_like_support_issue(query: str, lexical_gate: dict, max_centroid: float, config: dict) -> bool:
@@ -245,6 +257,8 @@ def _pack(
     start: float,
     domains: list[dict],
     generator_info: dict | None = None,
+    router_info: dict | None = None,
+    retrieval_info: dict | None = None,
 ) -> dict:
     scanned = fraction_scanned([d["domain"] for d in domains]) if domains else 1.0
     return {
@@ -258,4 +272,6 @@ def _pack(
         "latency_ms": (time.perf_counter() - start) * 1000.0,
         "fraction_kb_scanned": scanned,
         "generator": generator_info or {},
+        "domain_router": router_info or {},
+        "retrieval_info": retrieval_info or {},
     }

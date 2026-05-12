@@ -2,53 +2,74 @@
 
 ## Overview
 
-This project is a customer-support RAG system over a MultiDoc2Dial-style knowledge base. It answers support questions with citations, creates tickets when the issue is account-specific or lacks enough KB evidence, and rejects out-of-domain queries. The final comparison is against the official assignment baseline: a simple pretrained RAG system.
+This project is a support RAG system over a MultiDoc2Dial-style KB. It answers supported questions with citations, creates tickets for account-specific/manual-review issues, and rejects unsupported queries.  
+For final submission, we report only two main systems:
 
-## Official Baseline
+1. **Baseline**
+2. **Proposed: Domain-Router RAG with validation-tuned fallback**
 
-**Baseline** uses:
+---
 
-- `sentence-transformers/all-MiniLM-L6-v2` directly, with no fine-tuned retriever checkpoint
-- full-KB dense search
-- always `ANSWER` with a citation from retrieved evidence
-- no reranker
-- no domain routing
-- no triage/tool-policy model
-- no `CreateTicket` or `RejectQuery`
-- no preference/rubric module
+## Main Systems
 
-## Proposed System
+### Baseline
 
-The proposed system combines trained neural modules with lightweight answerability guardrails. Learned retrieval and triage/tool-policy models provide the main decision signals; rule-based checks are used only to prevent unsupported answers, vague-query failures, and malformed generations.
+- Pretrained retriever (`sentence-transformers/all-MiniLM-L6-v2`)
+- Full-KB search
+- Always returns `ANSWER`
+- No domain router fallback tuning
 
-The proposed system includes:
+### Proposed (Final)
 
-- fine-tuned dense retriever
-- trained DistilBERT `ANSWER` / `TICKET` / `REJECT` triage model
-- domain routing and KB/domain similarity checks
-- structured tools: `RouteDomain`, `SearchKB`, `GetPolicy`, `CreateTicket`, `RejectQuery`
-- trained reranker, reported as an ablation/final tradeoff rather than the headline setting
-- lightweight rubric-based preference/ranking module
-- grounded answer validation/generation with system-attached citations
+- 4-domain router (`SSA`, `VA`, `SA`, `FSA`)
+- Trained MLP action head for workflow/tool decision: `ANSWER` / `REJECT` / `TICKET`
+- Domain-first retrieval with validation-tuned fallback merge
+- Clean held-out evaluation
+- Final selected thresholds:
+  - `top_k_domains=2`
+  - `min_domain_confidence=0.7`
+  - `min_candidate_similarity=0.4`
+  - `min_domain_candidates=5`
+  - `fallback_merge_mode=merge`
+  - `rerank_after_merge=true`
 
-The decision policy is two-phase:
+Proposed architecture (kept unchanged):
 
-- **Phase 1: answerability guardrails.** Broad support-domain signals, account-specific patterns, KB proximity, centroid similarity, and evidence sufficiency checks catch high-confidence vague, unsupported, or account-specific cases.
-- **Phase 2: learned and semantic decision.** Remaining queries use domain routing, dense retrieval, DistilBERT triage/tool-policy, evidence sufficiency, and answer validation to choose `ANSWER`, `TICKET`, or `REJECT`.
+`query + short history -> learned domain router -> top-k domain retrieval -> fallback threshold check -> optional global merge -> evidence selection -> trained MLP action head -> ANSWER/REJECT/TICKET`
 
-## Trained Components
+---
 
-The assignment requires training or fine-tuning at least three of retriever, reranker, generator, preference alignment, and tool-policy model. We trained/fine-tuned: (A) dense retriever, (B) cross-encoder reranker, (C) FLAN-T5-small grounded answer generator, and (E) DistilBERT tool-policy/triage model. We also implemented a lightweight rubric preference ranker.
+## Final Baseline vs Proposed Results
 
-| Assignment option | Component | Evidence/status |
-|---|---|---|
-| A Retriever | fine-tuned `sentence-transformers/all-MiniLM-L6-v2` | trained |
-| B Reranker | fine-tuned `cross-encoder/ms-marco-MiniLM-L-6-v2` | trained, reported as ablation/final tradeoff |
-| C Generator | fine-tuned `google/flan-t5-small` | trained and used for answer synthesis when available |
-| D Preference/rubric alignment | lightweight rubric response ranker | implemented, not DPO |
-| E Tool-policy model | DistilBERT `ANSWER` / `TICKET` / `REJECT` classifier | trained |
+| Metric | Baseline | Proposed (Domain-Router) |
+|---|---:|---:|
+| Recall@5 | 0.1820 | 0.3473 |
+| EvidenceHit@5 | 0.1820 | 0.3473 |
+| ESA | 0.4760 | 0.7936 |
+| AQS | 0.6270 | 0.8195 |
+| Macro-F1 | 0.2500 | 0.8257 |
+| UnsupportedAnswerRate | 1.0000 | 0.2250 |
+| OODAnswerRate | 1.0000 | 0.4500 |
+| TicketMissRate | 1.0000 | 0.0000 |
 
-The extractive synthesizer is kept as a fallback for environments where the local generator checkpoint is unavailable or returns insufficient evidence. Tool decisions and citations remain system-controlled.
+## Routing Diagnostics (Proposed)
+
+| Diagnostic | Value | Interpretation |
+|---|---:|---|
+| Avg. domains searched | 2.0 | Router uses top-2 domain search |
+| Gold domain in searched domains | 0.685 | Gold-domain-in-searched coverage for top-2 routing |
+| Avg. domain confidence | 0.7828 | Router predictions are generally confident |
+| Fallback trigger count | 799 | Fallback is actively used to protect recall |
+
+These diagnostics show a meaningful domain-first search policy with fallback recovery, not full-KB-first retrieval.
+
+Final exported files:
+
+- `outputs/final/baseline_final_metrics.json`
+- `outputs/final/proposed_domain_router_final_metrics.json`
+- `outputs/final/final_comparison_table.md`
+
+---
 
 ## Setup
 
@@ -58,123 +79,49 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-Optional UI dependency:
+---
 
-```powershell
-.\.venv\Scripts\python.exe -m pip install streamlit
-```
+## Reproduction
 
-## Demo
-
-CLI:
-
-```powershell
-.\.venv\Scripts\python.exe scripts\demo_cli.py --query "Can I renew my benefits online?" --config configs\proposed.yaml
-```
-
-Streamlit:
-
-```powershell
-.\.venv\Scripts\python.exe -m streamlit run app_streamlit.py
-```
-
-More demo notes are in `DEMO_UI.md`.
-
-## Training
-
-Full reproduction:
+### 1) Prepare data/index (if missing)
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\prepare_data.py --config configs\train_full.yaml
-.\.venv\Scripts\python.exe scripts\train_retriever.py --config configs\train_full.yaml
 .\.venv\Scripts\python.exe scripts\build_index.py --config configs\train_full.yaml
-.\.venv\Scripts\python.exe scripts\train_reranker.py --config configs\train_full.yaml
-.\.venv\Scripts\python.exe scripts\train_triage.py --config configs\train_full.yaml
-.\.venv\Scripts\python.exe scripts\train_preference.py --config configs\train_full.yaml
 ```
 
-Balanced triage/tool-policy:
+### 2) Train domain router and tune fallback
 
 ```powershell
-.\.venv\Scripts\python.exe scripts\build_balanced_triage_data.py
-.\.venv\Scripts\python.exe scripts\train_triage.py --config configs\train_triage_balanced.yaml
+.\.venv\Scripts\python.exe scripts\prepare_domain_router_clean_split.py
+.\.venv\Scripts\python.exe scripts\train_domain_router.py --config configs\domain_router_experiment.yaml
+.\.venv\Scripts\python.exe scripts\tune_domain_router_fallback_grid_fixed.py --config configs\domain_router_experiment.yaml
 ```
 
-## Evaluation
+### 3) Export final comparison artifacts
 
 ```powershell
-.\.venv\Scripts\python.exe scripts\evaluate_baseline_vs_proposed.py
-.\.venv\Scripts\python.exe scripts\evaluate_esa_aqs.py
-.\.venv\Scripts\python.exe scripts\evaluate_unsupported_answer_safety.py
+.\.venv\Scripts\python.exe scripts\export_final_results.py
 ```
 
-Metric definitions are in `docs/METRICS.md`. Metric provenance is in `outputs/reports/METRIC_PROVENANCE.md`.
-
-## Final Results
-
-### Answer-Only Retrieval
-
-| Metric | Baseline | Proposed |
-|---|---:|---:|
-| Recall@1 | 0.1040 | 0.1560 |
-| Recall@5 | 0.1820 | 0.3620 |
-| MRR@10 | 0.1291 | 0.2320 |
-| EvidenceHit@5 | 0.1820 | 0.3620 |
-
-### ESA/AQS
-
-| Metric | Baseline | Proposed |
-|---|---:|---:|
-| ESA | 0.4760 | 0.5300 |
-| AQS | 0.6270 | 0.6733 |
-
-### Unsupported-Answer Safety
-
-| Metric | Baseline | Proposed |
-|---|---:|---:|
-| UnsupportedAnswerRate | 1.0000 | 0.5525 |
-| UnsupportedAnswerPreventionRate | 0.0000 | 0.4475 |
-| SafeActionRate | 0.0000 | 0.4475 |
-| OODAnswerRate | 1.0000 | 0.5500 |
-| TicketMissRate | 1.0000 | 0.5550 |
-| FalseRejectOnAnswerableRate | 0.0000 | 0.0000 |
-
-### Mixed Workflow
-
-| Metric | Baseline | Proposed |
-|---|---:|---:|
-| Tool Decision Accuracy | 0.6000 | 0.6760 |
-| Macro-F1 | 0.2500 | 0.5772 |
-| TICKET F1 | 0.0000 | 0.4541 |
-| REJECT F1 | 0.0000 | 0.5019 |
-| SupportedResponseRate | 0.5750 | 0.6580 |
-| EvidenceUseAccuracy | 0.6000 | 0.6760 |
-| REE@5 | 0.1820 | 0.3947 |
-
-Compared with the official simple pretrained RAG baseline, the proposed system improves retrieval, evidence support, answer-quality proxy score, and unsupported-answer safety. Baseline-1 Fine-tuned RAG remains a strong answer-only ablation but lacks support workflow actions.
-
-## Ablations
-
-- **Baseline-1 Fine-tuned RAG**: strong on extractive answer-only ESA/AQS, but has no ticket/reject tools.
-- **Reranker-enabled proposed**: improves mixed workflow/safety tradeoffs, but adds latency and changes answer-only evidence behavior.
-- **Safety-tuned thresholds**: prevent more unsupported answers, with lower ESA/AQS and answer coverage.
-- **Generator/rechunking**: the fine-tuned FLAN-T5-small generator is used for answer wording when available; quality is still limited by retrieved evidence and automatic guardrails.
+---
 
 ## Limitations
 
-- Synthetic `TICKET` and `REJECT` labels are used because MultiDoc2Dial mainly provides answerable document-grounded turns.
-- ESA/AQS are automatic proxy metrics, not human judgment.
-- Preference alignment is lightweight rubric ranking, not DPO.
-- Rule-based guardrails are used for answerability/safety; they are not demo-specific hardcoding.
-- Fine-tuned RAG remains stronger on extractive answer-only ESA/AQS.
-- Reranker and safety-threshold variants expose tradeoffs between answer quality, latency, and safety.
+- Mixed workflow includes synthetic `TICKET`/`REJECT` examples because MultiDoc2Dial is mostly answerable.
+- ESA/AQS are automatic proxy metrics.
+- Ablation runs are kept for auditability but are not part of the headline final comparison.
 
-## Repository Layout
+---
 
-- `configs/`: final baseline, proposed, ablation, and training configs
-- `scripts/`: training, evaluation, and demo scripts
-- `src/`: retrieval, routing, triage, generation, tools, and policy modules
-- `schemas/`: JSON tool schemas
-- `docs/`: metrics, guardrails, synthetic data, and preference/rubric notes
-- `outputs/reports/`: final report-facing metrics and summaries
-- `report/` and `slides/`: submission report/slide notes
+## Ablations / Archive Note
+
+The following remain as appendix/ablation-only analyses (not headline results):
+
+- Neural cluster gate experiments
+- Evidence-supervised router leaked/invalid runs
+- Pre-fixed domain-router runs
+- Learned-reranker domain-router run
+- Older frozen proposed comparisons
+
+See `outputs/reports/` for those records.
