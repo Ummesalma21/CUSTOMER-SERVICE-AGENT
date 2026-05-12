@@ -15,14 +15,12 @@ fp16: false
 
 domain_router:
   enabled: true
-  mode: evidence_supervised
   model_path: outputs/domain_router/model.pkl
   selected_thresholds_path: outputs/domain_router/selected_thresholds.json
-  routing_strategy: primary_domain_with_global_fallback
   top_k_domains: 2
-  min_router_confidence: 0.7
+  min_domain_confidence: 0.7
   min_candidate_similarity: 0.4
-  min_cluster_candidates: 5
+  min_domain_candidates: 5
   enable_global_fallback: true
   fallback_merge_mode: merge
   rerank_after_merge: true

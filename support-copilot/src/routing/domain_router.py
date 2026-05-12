@@ -38,7 +38,7 @@ def route_query(query: str, history: str | None, config: dict) -> dict[str, Any]
     if not router.get("enabled"):
         return {"enabled": False, "reason": router.get("reason", "disabled")}
     payload = router["payload"]
-    emb = _embed(_router_text(query, history))
+    emb = _embed(_router_text(query))
     domain = _predict(payload["domain_model"], payload["domain_labels"], emb)
     action = _predict(payload["action_model"], payload["action_labels"], emb)
     top_k = int(router["thresholds"].get("top_k_domains", 2))
@@ -65,12 +65,14 @@ def retrieve_primary_domains(query: str, routed: dict, config: dict) -> tuple[li
     hits = _merge_hits(hits)[:top_k]
     best_score = float(hits[0]["score"]) if hits else 0.0
     fallback_reasons = []
-    if len(hits) < int(thresholds.get("min_cluster_candidates", 5)):
+    min_domain_candidates = int(thresholds.get("min_domain_candidates", thresholds.get("min_cluster_candidates", 5)))
+    min_domain_confidence = float(thresholds.get("min_domain_confidence", thresholds.get("min_router_confidence", 0.7)))
+    if len(hits) < min_domain_candidates:
         fallback_reasons.append("too_few_domain_candidates")
     if best_score < float(thresholds.get("min_candidate_similarity", 0.30)):
         fallback_reasons.append("weak_domain_candidate_similarity")
-    if float(routed.get("router_confidence", 0.0)) < float(thresholds.get("min_router_confidence", 0.35)):
-        fallback_reasons.append("low_router_confidence")
+    if float(routed.get("router_confidence", 0.0)) < min_domain_confidence:
+        fallback_reasons.append("low_domain_confidence")
     return hits, {
         "fallback_triggered": bool(fallback_reasons) and bool(thresholds.get("enable_global_fallback", True)),
         "fallback_reasons": fallback_reasons,
@@ -108,9 +110,8 @@ def _merge_hits(rows: list[dict]) -> list[dict]:
     return out
 
 
-def _router_text(query: str, history: str | None) -> str:
-    h = (history or "").strip()
-    return f"History: {h}\nQuestion: {query}" if h else query
+def _router_text(query: str) -> str:
+    return query
 
 
 @lru_cache(maxsize=1)

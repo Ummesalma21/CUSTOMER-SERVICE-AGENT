@@ -127,7 +127,7 @@ def _build_cache(rows: list[dict], config: dict, top_k_domains: int) -> list[dic
     cache = []
     for r in rows:
         q = r.get("query", "")
-        routed = route_query(q, r.get("history", ""), c)
+        routed = route_query(q, None, c)
         kb_domains = [d for d in (routed.get("kb_domains") or []) if d][:top_k_domains]
         domain_hits = {d: search(q, top_k=20, domain=d) for d in kb_domains}
         global_hits = search(q, top_k=20, domain=None)

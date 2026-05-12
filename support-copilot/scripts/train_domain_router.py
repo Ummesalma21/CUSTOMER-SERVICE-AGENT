@@ -134,9 +134,9 @@ def _tune_thresholds(config: dict, payload: dict, x_val: np.ndarray, val_rows: l
     grid = cfg.get("threshold_grid", {})
     combos = list(
         itertools.product(
-            grid.get("min_router_confidence", [0.35]),
+            grid.get("min_domain_confidence", grid.get("min_router_confidence", [0.35])),
             grid.get("min_candidate_similarity", [0.30]),
-            grid.get("min_cluster_candidates", [5]),
+            grid.get("min_domain_candidates", grid.get("min_cluster_candidates", [5])),
             grid.get("top_k_domains", [2]),
         )
     )
@@ -156,9 +156,9 @@ def _tune_thresholds(config: dict, payload: dict, x_val: np.ndarray, val_rows: l
         ticket_rows = [idx for idx, r in enumerate(val_rows) if r.get("action_label") == "TICKET"]
         ticket_miss = sum(action_labels[int(action_pred[j])] == "ANSWER" for j in ticket_rows)
         row = {
-            "min_router_confidence": min_conf,
+            "min_domain_confidence": min_conf,
             "min_candidate_similarity": min_sim,
-            "min_cluster_candidates": min_count,
+            "min_domain_candidates": min_count,
             "top_k_domains": topk,
             "Recall@5": recall_proxy,
             "EvidenceHit@5": recall_proxy,
@@ -173,7 +173,7 @@ def _tune_thresholds(config: dict, payload: dict, x_val: np.ndarray, val_rows: l
             flush=True,
         )
     results.sort(key=lambda r: (r["Recall@5"], r["EvidenceHit@5"], -r["UnsupportedAnswerRate"], -r["TicketMissRate"]), reverse=True)
-    selected = {k: results[0][k] for k in ["min_router_confidence", "min_candidate_similarity", "min_cluster_candidates", "top_k_domains"]}
+    selected = {k: results[0][k] for k in ["min_domain_confidence", "min_candidate_similarity", "min_domain_candidates", "top_k_domains"]}
     return selected, results
 
 

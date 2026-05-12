@@ -43,3 +43,7 @@ support-copilot/archive/old_runs/
 
 # Logs
 support-copilot/outputs/logs/*.log
+
+# Local packaging artifacts
+Group06_Code.zip
+_zip_build/

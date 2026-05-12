@@ -33,7 +33,7 @@ The proposed system uses:
 
 Pipeline (kept unchanged):
 
-`query + short history -> learned router -> top-k domain retrieval -> fallback thresholds -> optional global merge -> evidence selection -> trained MLP action head -> final workflow action`
+`query -> learned router -> top-k domain retrieval -> fallback thresholds -> optional global merge -> evidence selection -> trained MLP action head -> final workflow action`
 
 Final proposed metrics are read from:
 

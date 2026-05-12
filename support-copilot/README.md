@@ -35,7 +35,7 @@ For final submission, we report only two main systems:
 
 Proposed architecture (kept unchanged):
 
-`query + short history -> learned domain router -> top-k domain retrieval -> fallback threshold check -> optional global merge -> evidence selection -> trained MLP action head -> ANSWER/REJECT/TICKET`
+`query -> learned domain router -> top-k domain retrieval -> fallback threshold check -> optional global merge -> evidence selection -> trained MLP action head -> ANSWER/REJECT/TICKET`
 
 ---
 
@@ -95,7 +95,7 @@ pip install -r requirements.txt
 ```powershell
 .\.venv\Scripts\python.exe scripts\prepare_domain_router_clean_split.py
 .\.venv\Scripts\python.exe scripts\train_domain_router.py --config configs\domain_router_experiment.yaml
-.\.venv\Scripts\python.exe scripts\tune_domain_router_fallback_grid_fixed.py --config configs\domain_router_experiment.yaml
+.\.venv\Scripts\python.exe scripts\tune_domain_router_fallback_grid.py --config configs\domain_router_experiment.yaml
 ```
 
 ### 3) Export final comparison artifacts
